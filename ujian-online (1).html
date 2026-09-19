@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Ujian Online — SMK CALM</title>
+
+<!-- ============================================================
+     LIBRARY EKSTERNAL (jangan dihapus)
+     ============================================================ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  /* Identitas SMK Ciledug Al-Musaddadiyah (CALM): navy elegan + aksen emas */
+  --primary:#0b3d91; --primary-dark:#082a66; --primary-light:#eaf0fb;
+  --primary-2:#123f9e; --navy-deep:#071d47;
+  --gold:#d4a017; --gold-light:#fbeecb; --gold-dark:#a87a0c;
+  --accent:var(--gold); --success:#0e9f6e; --danger:#dc2626; --warn:#d4a017;
+  --bg:#f4f6fb; --card:#ffffff; --text:#152238; --muted:#5b6b8c; --border:#e3e8f4;
+  --radius:18px;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+h1,h2,h3{font-family:'Poppins',sans-serif;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent;}
+#app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;}
+.container{padding:20px 18px 40px;flex:1;}
+h1,h2,h3{margin:0 0 6px;letter-spacing:-.01em;}
+h1{font-size:22px;} h2{font-size:19px;} h3{font-size:16px;}
+p{color:var(--muted);line-height:1.55;margin:0 0 14px;}
+.topbar{position:sticky;top:0;z-index:10;background:linear-gradient(120deg,var(--navy-deep) 0%,var(--primary) 55%,var(--primary-2) 100%);color:#fff;padding:18px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 18px rgba(11,61,145,.28);position:relative;overflow:hidden;}
+.topbar::after{content:"";position:absolute;top:-40%;right:-10%;width:160px;height:160px;background:radial-gradient(circle,rgba(212,160,23,.25),transparent 70%);pointer-events:none;}
+.topbar h1{color:#fff;font-size:17px;margin:0;font-family:'Poppins',sans-serif;font-weight:700;}
+.topbar .back{background:rgba(255,255,255,.16);border:none;color:#fff;width:34px;height:34px;border-radius:10px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.topbar .back:active{background:rgba(255,255,255,.3);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:0 2px 10px rgba(11,61,145,.05);transition:box-shadow .2s,transform .15s;}
+.card.tap{cursor:pointer;}
+.card.tap:active{transform:scale(.98);}
+.card.tap:hover{box-shadow:0 6px 20px rgba(11,61,145,.1);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 16px;border-radius:13px;border:none;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s,box-shadow .2s;font-family:'Inter',sans-serif;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#fff;box-shadow:0 4px 14px rgba(11,61,145,.28);}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(11,61,145,.38);}
+.btn-outline{background:#fff;color:var(--primary);border:2px solid var(--primary);}
+.btn-outline:hover{background:var(--primary-light);}
+.btn-danger{background:#fff;color:var(--danger);border:2px solid var(--danger);}
+.btn-success{background:linear-gradient(120deg,var(--success),#0c8a5f);color:#fff;box-shadow:0 4px 14px rgba(14,159,110,.3);}
+.btn-gold{background:linear-gradient(120deg,var(--gold),var(--gold-dark));color:#3a2a03;box-shadow:0 4px 14px rgba(212,160,23,.35);}
+.btn-sm{padding:9px 12px;font-size:13px;width:auto;}
+.btn[disabled]{opacity:.5;pointer-events:none;}
+input,select,textarea{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;margin-bottom:12px;background:#fbfcfe;color:var(--text);font-family:inherit;transition:border-color .15s,box-shadow .15s,background .15s;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(11,61,145,.08);}
+label{font-size:13px;font-weight:700;color:var(--primary);display:block;margin-bottom:6px;letter-spacing:.01em;}
+.role-card{padding:30px 20px;text-align:center;border-radius:22px;position:relative;overflow:hidden;}
+.role-card::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(11,61,145,.04),rgba(212,160,23,.05));opacity:0;transition:opacity .2s;}
+.role-card:hover::before{opacity:1;}
+.role-icon{font-size:46px;margin-bottom:10px;filter:drop-shadow(0 4px 10px rgba(11,61,145,.15));}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.pill{display:inline-block;padding:5px 12px;border-radius:999px;background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:700;letter-spacing:.02em;}
+.pill.gold{background:var(--gold-light);color:var(--gold-dark);}
+.badge{display:inline-block;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:.4px;}
+.badge.ok{background:var(--gold-light);color:var(--gold-dark);}
+.badge.warn{background:var(--primary-light);color:var(--primary);}
+.row-between{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.muted{color:var(--muted);font-size:13px;}
+.center{text-align:center;}
+.q-nav{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0;}
+.q-dot{width:32px;height:32px;border-radius:9px;background:#eef1f8;color:var(--muted);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:.15s;cursor:pointer;}
+.q-dot:hover{transform:translateY(-1px);}
+.q-dot.answered{background:var(--gold-light);color:var(--gold-dark);}
+.q-dot.current{background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(11,61,145,.35);}
+.option{display:flex;align-items:center;gap:12px;padding:15px;border:2px solid var(--border);border-radius:15px;margin-bottom:10px;cursor:pointer;transition:.18s;background:#fff;position:relative;overflow:hidden;}
+.option:hover{border-color:#c7d3ec;}
+.option:active{transform:scale(.98);}
+.option.selected{border-color:var(--primary);background:var(--primary-light);box-shadow:0 3px 12px rgba(11,61,145,.12);}
+.option .letter{width:32px;height:32px;border-radius:50%;background:var(--border);color:var(--text);font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;transition:.18s;}
+.option.selected .letter{background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#fff;transform:scale(1.08);}
+.timer{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;padding:7px 14px;border-radius:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);}
+.timer.low{background:#fff0f0;color:var(--danger);border-color:transparent;animation:pulseTimer 1s infinite;}
+@keyframes pulseTimer{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
+.progressbar{height:9px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:18px;}
+.progressbar > div{height:100%;background:linear-gradient(90deg,var(--primary),var(--gold));transition:width .35s cubic-bezier(.4,0,.2,1);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{padding:10px 6px;border-bottom:1px solid var(--border);text-align:left;}
+th{color:var(--primary);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:800;}
+tr:hover td{background:var(--primary-light);}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy-deep);color:#fff;padding:13px 22px;border-radius:14px;font-size:14px;z-index:100;box-shadow:0 8px 24px rgba(7,29,71,.35);max-width:90%;text-align:center;font-weight:500;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty .icon{font-size:40px;margin-bottom:10px;}
+.spin{width:34px;height:34px;border:3px solid var(--primary-light);border-top-color:var(--primary);border-radius:50%;animation:sp .8s linear infinite;margin:20px auto;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.result-hero{text-align:center;padding:32px 20px;}
+.result-score{font-size:60px;font-weight:800;font-family:'Poppins',sans-serif;background:linear-gradient(135deg,var(--primary),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.qbuild{border:1.5px dashed var(--border);border-radius:15px;padding:14px;margin-bottom:12px;background:#fbfcfe;}
+.qbuild .row-between{margin-bottom:8px;}
+.link-x{color:var(--danger);font-size:13px;font-weight:600;cursor:pointer;}
+.code-box{background:linear-gradient(135deg,var(--primary-light),#fff);border:1px solid var(--border);border-radius:16px;padding:18px;text-align:center;margin-bottom:14px;position:relative;overflow:hidden;}
+.code-box .code{font-size:30px;font-weight:800;letter-spacing:5px;color:var(--primary);font-family:'Poppins',sans-serif;}
+.filters{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px;}
+.filters select{width:auto;margin:0;font-size:13px;padding:9px 12px;border-radius:10px;}
+@keyframes fadein{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.fadein{animation:fadein .3s cubic-bezier(.4,0,.2,1);}
+.brand-header{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:4px;}
+.brand-header .school-name{font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;color:var(--primary);}
+.brand-header .acc-badge{background:linear-gradient(120deg,var(--gold),var(--gold-dark));color:#3a2a03;font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;letter-spacing:.3px;}
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:999;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============================================================
+   1) KONFIGURASI FIREBASE — WAJIB DIISI SEBELUM DIPAKAI
+   ============================================================
+   Cara dapat config ini (gratis, ±5 menit):
+   1. Buka https://console.firebase.google.com -> "Add project"
+   2. Setelah project dibuat, klik ikon web "</>" untuk daftarkan web app
+   3. Copy object firebaseConfig yang muncul, tempel di bawah ini
+   4. Di menu kiri: Build -> Firestore Database -> Create database -> 
+      pilih "Start in test mode" (untuk mulai cepat) -> pilih lokasi asia
+   5. (Opsional tapi disarankan) Setelah beberapa hari, ganti rules di
+      Firestore -> Rules dengan aturan yang lebih aman, contoh ada di
+      bagian bawah file ini (lihat komentar CONTOH RULES).
+============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyD1Hl6fxEC1OxpDUy1lq8Vsxg2v4SO1w2w",
+  authDomain: "ujian-sekolah-smks-calm.firebaseapp.com",
+  projectId: "ujian-sekolah-smks-calm",
+  storageBucket: "ujian-sekolah-smks-calm.firebasestorage.app",
+  messagingSenderId: "944891916966",
+  appId: "1:944891916966:web:43b66faeda65fec627ba67"
+};
+
+// Kata sandi guru untuk masuk ke dashboard (silakan ganti)
+const TEACHER_PASSCODE = "guru123";
+
+/* ============================================================
+   FIRESTORE SECURITY RULES (disarankan, jangan pakai mode "test" terus)
+   Tempel di Firebase Console -> Firestore Database -> Rules -> Publish.
+   Lihat versi lengkap & penjelasannya di percakapan tempat file ini dibuat;
+   inti aturannya: exams & results hanya bisa dibuat (create), tidak bisa
+   diubah/dihapus dari aplikasi publik, dan field periode dibatasi ke
+   'UTS' / 'UAS' saja.
+============================================================ */
+
+let db = null, firebaseReady = false;
+try{
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  firebaseReady = true;
+}catch(e){ console.error("Firebase init error", e); }
+
+/* ============================================================
+   2) STATE & ROUTER
+   ============================================================ */
+const state = {
+  view: "home",
+  role: null,
+  examDraft: null,      // exam being built by teacher
+  currentExam: null,    // exam loaded by student
+  studentInfo: null,
+  answers: {},
+  qIndex: 0,
+  timerEnd: null,
+  timerInterval: null,
+  examList: [],
+  recapExam: null,
+  recapResults: [],
+  recapFilter: { kelas: "", jurusan: "" }
+};
+
+function nav(view, extra){ state.view = view; if(extra) Object.assign(state, extra); render(); }
+function toast(msg, ms=2400){
+  const t = document.createElement("div");
+  t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), ms);
+}
+function fireConfetti(){
+  let canvas = document.getElementById("confetti-canvas");
+  if(!canvas){
+    canvas = document.createElement("canvas");
+    canvas.id = "confetti-canvas";
+    document.body.appendChild(canvas);
+  }
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const ctx = canvas.getContext("2d");
+  const colors = ["#0b3d91","#d4a017","#fbeecb","#123f9e","#ffffff"];
+  const pieces = Array.from({length:70}, ()=>({
+    x: Math.random()*canvas.width, y: -20 - Math.random()*canvas.height*0.3,
+    r: 4+Math.random()*5, c: colors[Math.floor(Math.random()*colors.length)],
+    vy: 2+Math.random()*3, vx: -1.5+Math.random()*3, rot: Math.random()*360, vr: -6+Math.random()*12
+  }));
+  let frame = 0;
+  function tick(){
+    frame++;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*1.6);
+      ctx.restore();
+    });
+    if(frame < 110) requestAnimationFrame(tick);
+    else { ctx.clearRect(0,0,canvas.width,canvas.height); canvas.remove(); }
+  }
+  tick();
+}
+function genCode(){
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let c=""; for(let i=0;i<6;i++) c += chars[Math.floor(Math.random()*chars.length)];
+  return c;
+}
+function esc(s){ return String(s??"").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+/* ============================================================
+   3) TOP BAR
+   ============================================================ */
+function topbar(title, onBack){
+  return `<div class="topbar">
+    ${onBack ? `<button class="back" onclick="${onBack}">←</button>` : ""}
+    <h1>${esc(title)}</h1>
+  </div>`;
+}
+
+/* ============================================================
+   4) VIEW: HOME (pilih peran)
+   ============================================================ */
+function viewHome(){
+  return `
+  ${topbar("Ujian Online")}
+  <div class="container fadein">
+    <div class="brand-header" style="margin-top:6px">
+      <span class="school-name">SMKS Ciledug Al-Musaddadiyah</span>
+      <span class="acc-badge">AKREDITASI A</span>
+    </div>
+    <p class="center" style="margin-top:2px">Pilih peran Anda untuk melanjutkan.</p>
+    <div class="grid2">
+      <div class="card tap role-card" onclick="nav('teacherLogin')">
+        <div class="role-icon">👩‍🏫</div>
+        <h3>Guru</h3>
+        <p class="muted" style="margin:0">Buat & kelola ujian</p>
+      </div>
+      <div class="card tap role-card" onclick="nav('studentJoin')">
+        <div class="role-icon">🎓</div>
+        <h3>Siswa</h3>
+        <p class="muted" style="margin:0">Ikuti ujian</p>
+      </div>
+    </div>
+    ${!firebaseReady ? `<div class="card" style="border-color:var(--danger)"><b style="color:var(--danger)">⚠ Firebase belum dikonfigurasi.</b><p style="margin:6px 0 0">Buka file HTML ini, isi bagian <code>firebaseConfig</code> di dalam tag &lt;script&gt; dengan config dari Firebase Console Anda.</p></div>` : ""}
+  </div>`;
+}
+
+/* ============================================================
+   5) VIEW: TEACHER LOGIN
+   ============================================================ */
+function viewTeacherLogin(){
+  return `
+  ${topbar("Masuk sebagai Guru", "nav('home')")}
+  <div class="container fadein">
+    <div class="card">
+      <label>Kata sandi guru</label>
+      <input id="pw" type="password" placeholder="Masukkan kata sandi" onkeydown="if(event.key==='Enter')teacherLogin()">
+      <button class="btn btn-primary" onclick="teacherLogin()">Masuk</button>
+    </div>
+  </div>`;
+}
+function teacherLogin(){
+  const pw = document.getElementById("pw").value;
+  if(pw === TEACHER_PASSCODE){ loadExamList(); nav("teacherDash"); }
+  else toast("Kata sandi salah");
+}
+
+/* ============================================================
+   6) VIEW: TEACHER DASHBOARD
+   ============================================================ */
+async function loadExamList(){
+  if(!firebaseReady) return;
+  try{
+    const snap = await db.collection("exams").orderBy("createdAt","desc").limit(50).get();
+    state.examList = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  }catch(e){ console.error(e); toast("Gagal memuat daftar ujian"); }
+  render();
+}
+function viewTeacherDash(){
+  const list = state.examList;
+  return `
+  ${topbar("Dashboard Guru", "nav('home')")}
+  <div class="container fadein">
+    <button class="btn btn-primary" onclick="startNewExam()">+ Buat Ujian Baru</button>
+    <div style="height:16px"></div>
+    <h3>Ujian Saya</h3>
+    ${list.length===0 ? `<div class="empty"><div class="icon">📭</div>Belum ada ujian dibuat</div>` :
+      list.map(ex=>`
+        <div class="card tap" onclick="openRecap('${ex.id}')">
+          <div class="row-between">
+            <div>
+              <span class="badge ${ex.periode==='UAS'?'warn':'ok'}">${esc(ex.periode||'UTS')}</span>
+              <b style="display:block;margin-top:4px">${esc(ex.title)}</b>
+              <span class="muted">${esc(ex.kelas)} · ${esc(ex.jurusan)} · ${(ex.questions||[]).length} soal</span>
+            </div>
+            <span class="pill">${esc(ex.code)}</span>
+          </div>
+        </div>
+      `).join("")
+    }
+  </div>`;
+}
+function startNewExam(){
+  state.examDraft = { title:"", periode:"UTS", jurusan:"", kelas:"", prodi:"", duration:30, questions:[] };
+  nav("buildExam");
+}
+
+/* ============================================================
+   7) VIEW: BUILD EXAM (buat / tambah soal)
+   ============================================================ */
+function viewBuildExam(){
+  const d = state.examDraft;
+  return `
+  ${topbar("Buat Ujian", "nav('teacherDash')")}
+  <div class="container fadein">
+    <div class="card">
+      <label>Judul Ujian</label>
+      <input id="ex_title" value="${esc(d.title)}" placeholder="Contoh: UAS Matematika Kelas X" oninput="state.examDraft.title=this.value">
+      <label>Periode Ujian</label>
+      <select id="ex_periode" onchange="state.examDraft.periode=this.value">
+        <option value="UTS" ${d.periode==="UTS"?"selected":""}>Ujian Tengah Semester (UTS)</option>
+        <option value="UAS" ${d.periode==="UAS"?"selected":""}>Ujian Akhir Semester (UAS)</option>
+      </select>
+      <div class="grid2">
+        <div><label>Kelas</label><input id="ex_kelas" value="${esc(d.kelas)}" placeholder="X-1" oninput="state.examDraft.kelas=this.value"></div>
+        <div><label>Jurusan</label><input id="ex_jurusan" value="${esc(d.jurusan)}" placeholder="IPA" oninput="state.examDraft.jurusan=this.value"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Program Studi</label><input id="ex_prodi" value="${esc(d.prodi)}" placeholder="opsional" oninput="state.examDraft.prodi=this.value"></div>
+        <div><label>Durasi (menit)</label><input id="ex_dur" type="number" value="${d.duration}" oninput="state.examDraft.duration=parseInt(this.value)||0"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row-between"><h3>Impor Soal dari Excel</h3></div>
+      <p style="margin-bottom:10px">Kolom: <b>Soal, PilihanA, PilihanB, PilihanC, PilihanD, JawabanBenar</b> (isi JawabanBenar dengan huruf A/B/C/D).</p>
+      <button class="btn btn-outline" onclick="downloadTemplate()">⬇ Unduh Template Excel</button>
+      <div style="height:8px"></div>
+      <input type="file" id="fileImport" accept=".xlsx,.xls,.csv" onchange="importExcel(event)">
+      <p class="muted" style="margin:6px 0 0">Punya soal dalam PDF/Word? Salin isi soal ke dalam template Excel di atas terlebih dulu, lalu impor — cara ini paling akurat dibanding upload PDF/Word langsung.</p>
+    </div>
+
+    <div class="card">
+      <div class="row-between"><h3>Soal (${d.questions.length})</h3><button class="btn btn-outline btn-sm" onclick="addManualQuestion()">+ Tambah Manual</button></div>
+      ${d.questions.map((q,i)=>`
+        <div class="qbuild">
+          <div class="row-between"><b>Soal ${i+1}</b><span class="link-x" onclick="removeQuestion(${i})">Hapus</span></div>
+          <textarea rows="2" placeholder="Tulis pertanyaan" oninput="state.examDraft.questions[${i}].soal=this.value">${esc(q.soal)}</textarea>
+          ${["A","B","C","D"].map(L=>`
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+              <input type="radio" name="correct${i}" ${q.correct===L?"checked":""} onchange="state.examDraft.questions[${i}].correct='${L}'" style="width:auto;margin:0">
+              <input style="margin:0" placeholder="Pilihan ${L}" value="${esc(q.options[L]||"")}" oninput="state.examDraft.questions[${i}].options['${L}']=this.value">
+            </div>
+          `).join("")}
+        </div>
+      `).join("")}
+      ${d.questions.length===0 ? `<p class="muted">Belum ada soal. Tambah manual atau impor dari Excel.</p>` : ""}
+    </div>
+
+    <button class="btn btn-success" onclick="saveExam()">💾 Simpan & Buat Kode Ujian</button>
+  </div>`;
+}
+function addManualQuestion(){
+  state.examDraft.questions.push({soal:"", options:{A:"",B:"",C:"",D:""}, correct:"A"});
+  render();
+}
+function removeQuestion(i){ state.examDraft.questions.splice(i,1); render(); }
+
+function downloadTemplate(){
+  const wsData = [
+    ["Soal","PilihanA","PilihanB","PilihanC","PilihanD","JawabanBenar"],
+    ["Ibukota Indonesia adalah?","Jakarta","Bandung","Surabaya","Medan","A"]
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Soal");
+  XLSX.writeFile(wb, "template_soal_ujian.xlsx");
+}
+function importExcel(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const wb = XLSX.read(e.target.result, {type:"array"});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:""});
+      let added = 0;
+      rows.forEach(r=>{
+        const soal = r.Soal || r.soal || "";
+        if(!soal) return;
+        state.examDraft.questions.push({
+          soal: String(soal),
+          options:{
+            A: String(r.PilihanA ?? r.pilihanA ?? ""),
+            B: String(r.PilihanB ?? r.pilihanB ?? ""),
+            C: String(r.PilihanC ?? r.pilihanC ?? ""),
+            D: String(r.PilihanD ?? r.pilihanD ?? "")
+          },
+          correct: String(r.JawabanBenar ?? r.jawabanBenar ?? "A").trim().toUpperCase().charAt(0) || "A"
+        });
+        added++;
+      });
+      toast(`${added} soal berhasil diimpor`);
+      render();
+    }catch(err){ console.error(err); toast("Gagal membaca file. Pastikan format sesuai template."); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function saveExam(){
+  const d = state.examDraft;
+  if(!d.title.trim()) return toast("Judul ujian wajib diisi");
+  if(d.questions.length===0) return toast("Tambahkan minimal 1 soal");
+  for(const q of d.questions){
+    if(!q.soal.trim()) return toast("Ada soal yang kosong");
+  }
+  if(!firebaseReady) return toast("Firebase belum dikonfigurasi");
+  const code = genCode();
+  try{
+    const ref = await db.collection("exams").add({
+      title: d.title, periode: d.periode || "UTS", kelas: d.kelas, jurusan: d.jurusan, prodi: d.prodi,
+      duration: d.duration, questions: d.questions, code, active:true,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast("Ujian berhasil dibuat!");
+    nav("examCreated", {createdExam:{id:ref.id, code, title:d.title}});
+    setTimeout(fireConfetti, 150);
+  }catch(e){ console.error(e); toast("Gagal menyimpan ujian"); }
+}
+function viewExamCreated(){
+  const ex = state.createdExam;
+  return `
+  ${topbar("Ujian Dibuat", "nav('teacherDash')")}
+  <div class="container fadein center">
+    <div class="card">
+      <div style="font-size:44px">🎉</div>
+      <h2>${esc(ex.title)}</h2>
+      <p>Bagikan kode ini ke siswa untuk mulai ujian:</p>
+      <div class="code-box"><div class="code">${esc(ex.code)}</div></div>
+      <button class="btn btn-primary" onclick="loadExamList();nav('teacherDash')">Kembali ke Dashboard</button>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   8) VIEW: RECAP HASIL (guru)
+   ============================================================ */
+async function openRecap(examId){
+  const ex = state.examList.find(e=>e.id===examId) || (await db.collection("exams").doc(examId).get()).data();
+  state.recapExam = {id:examId, ...ex};
+  state.recapFilter = {kelas:"", jurusan:""};
+  nav("recap");
+  try{
+    const snap = await db.collection("exams").doc(examId).collection("results").orderBy("submittedAt","desc").get();
+    state.recapResults = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  }catch(e){ console.error(e); }
+  render();
+}
+function viewRecap(){
+  const ex = state.recapExam;
+  let results = state.recapResults;
+  const kelasList = [...new Set(results.map(r=>r.kelas).filter(Boolean))];
+  const jurusanList = [...new Set(results.map(r=>r.jurusan).filter(Boolean))];
+  const f = state.recapFilter;
+  const filtered = results.filter(r => (!f.kelas || r.kelas===f.kelas) && (!f.jurusan || r.jurusan===f.jurusan));
+  const avg = filtered.length ? (filtered.reduce((s,r)=>s+r.score,0)/filtered.length).toFixed(1) : "-";
+  const max = filtered.length ? Math.max(...filtered.map(r=>r.score)) : "-";
+  const min = filtered.length ? Math.min(...filtered.map(r=>r.score)) : "-";
+
+  return `
+  ${topbar("Rekap Hasil", "nav('teacherDash')")}
+  <div class="container fadein">
+    <div class="card">
+      <h3>${esc(ex.title)}</h3>
+      <span class="pill">Kode: ${esc(ex.code)}</span>
+      <div class="code-box" style="margin-top:12px">
+        <div class="grid2" style="text-align:center">
+          <div><div style="font-size:22px;font-weight:800;color:var(--primary)">${filtered.length}</div><div class="muted">Peserta</div></div>
+          <div><div style="font-size:22px;font-weight:800;color:var(--primary)">${avg}</div><div class="muted">Rata-rata</div></div>
+        </div>
+      </div>
+      <p class="muted">Tertinggi: <b>${max}</b> · Terendah: <b>${min}</b></p>
+    </div>
+
+    <div class="filters">
+      <select onchange="state.recapFilter.kelas=this.value;render()">
+        <option value="">Semua Kelas</option>
+        ${kelasList.map(k=>`<option value="${esc(k)}" ${f.kelas===k?"selected":""}>${esc(k)}</option>`).join("")}
+      </select>
+      <select onchange="state.recapFilter.jurusan=this.value;render()">
+        <option value="">Semua Jurusan</option>
+        ${jurusanList.map(j=>`<option value="${esc(j)}" ${f.jurusan===j?"selected":""}>${esc(j)}</option>`).join("")}
+      </select>
+    </div>
+
+    <button class="btn btn-outline" onclick="exportRecap()">⬇ Export ke Excel</button>
+    <div style="height:12px"></div>
+
+    ${filtered.length===0 ? `<div class="empty"><div class="icon">🕒</div>Belum ada siswa yang mengumpulkan</div>` : `
+    <div class="card" style="overflow-x:auto">
+      <table>
+        <tr><th>Nama</th><th>Kelas</th><th>Jurusan</th><th>Nilai</th></tr>
+        ${filtered.map(r=>`<tr><td>${esc(r.nama)}</td><td>${esc(r.kelas)}</td><td>${esc(r.jurusan)}</td><td><b>${r.score}</b></td></tr>`).join("")}
+      </table>
+    </div>`}
+  </div>`;
+}
+function exportRecap(){
+  const ex = state.recapExam;
+  const f = state.recapFilter;
+  const filtered = state.recapResults.filter(r => (!f.kelas || r.kelas===f.kelas) && (!f.jurusan || r.jurusan===f.jurusan));
+  const data = filtered.map(r=>({
+    Nama:r.nama, Kelas:r.kelas, Jurusan:r.jurusan, ProgramStudi:r.prodi||"",
+    Nilai:r.score, BenarBenar:r.correctCount, TotalSoal:r.total
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Rekap");
+  XLSX.writeFile(wb, `rekap_${(ex.title||"ujian").replace(/[^a-z0-9]/gi,"_")}.xlsx`);
+}
+
+/* ============================================================
+   9) VIEW: STUDENT JOIN
+   ============================================================ */
+function viewStudentJoin(){
+  return `
+  ${topbar("Masuk Ujian", "nav('home')")}
+  <div class="container fadein">
+    <div class="card">
+      <label>Kode Ujian</label>
+      <input id="joinCode" placeholder="Contoh: A1B2C3" style="text-transform:uppercase;letter-spacing:3px;font-weight:700;text-align:center" maxlength="6">
+      <button class="btn btn-primary" onclick="findExam()">Lanjutkan</button>
+    </div>
+  </div>`;
+}
+async function findExam(){
+  const code = document.getElementById("joinCode").value.trim().toUpperCase();
+  if(!code) return toast("Masukkan kode ujian");
+  if(!firebaseReady) return toast("Firebase belum dikonfigurasi");
+  try{
+    const snap = await db.collection("exams").where("code","==",code).limit(1).get();
+    if(snap.empty) return toast("Kode ujian tidak ditemukan");
+    const doc = snap.docs[0];
+    state.currentExam = {id:doc.id, ...doc.data()};
+    nav("studentInfo");
+  }catch(e){ console.error(e); toast("Gagal mencari ujian"); }
+}
+function viewStudentInfo(){
+  const ex = state.currentExam;
+  return `
+  ${topbar("Identitas Peserta", "nav('studentJoin')")}
+  <div class="container fadein">
+    <div class="card">
+      <h3>${esc(ex.title)}</h3>
+      <p class="muted">${(ex.questions||[]).length} soal · ${ex.duration} menit</p>
+    </div>
+    <div class="card">
+      <label>Nama Lengkap</label>
+      <input id="s_nama" placeholder="Nama Anda">
+      <label>Kelas</label>
+      <input id="s_kelas" placeholder="Contoh: X-1" value="${esc(ex.kelas||"")}">
+      <label>Jurusan</label>
+      <input id="s_jurusan" placeholder="Contoh: IPA" value="${esc(ex.jurusan||"")}">
+      <label>Program Studi (opsional)</label>
+      <input id="s_prodi" placeholder="opsional" value="${esc(ex.prodi||"")}">
+      <button class="btn btn-primary" onclick="beginExam()">Mulai Ujian</button>
+    </div>
+  </div>`;
+}
+function beginExam(){
+  const nama = document.getElementById("s_nama").value.trim();
+  const kelas = document.getElementById("s_kelas").value.trim();
+  const jurusan = document.getElementById("s_jurusan").value.trim();
+  const prodi = document.getElementById("s_prodi").value.trim();
+  if(!nama || !kelas) return toast("Nama dan kelas wajib diisi");
+
+  const lockKey = `ujian_done_${state.currentExam.id}_${nama.toLowerCase()}`;
+  if(localStorage.getItem(lockKey)) return toast("Anda sudah mengumpulkan ujian ini sebelumnya");
+
+  state.studentInfo = {nama, kelas, jurusan, prodi};
+  state.answers = {};
+  state.qIndex = 0;
+  const durMs = (state.currentExam.duration||30)*60*1000;
+  state.timerEnd = Date.now() + durMs;
+  nav("exam");
+  startTimer();
+}
+
+/* ============================================================
+   10) VIEW: EXAM (siswa mengerjakan)
+   ============================================================ */
+function startTimer(){
+  clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(()=>{
+    const left = state.timerEnd - Date.now();
+    if(left<=0){ clearInterval(state.timerInterval); toast("Waktu habis, ujian dikumpulkan otomatis"); submitExam(); return; }
+    const el = document.getElementById("timerDisplay");
+    if(el){
+      const m = Math.floor(left/60000), s = Math.floor((left%60000)/1000);
+      el.textContent = `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+      el.className = "timer" + (left < 60000 ? " low" : "");
+    }
+  }, 1000);
+}
+function viewExam(){
+  const ex = state.currentExam;
+  const qs = ex.questions;
+  const i = state.qIndex;
+  const q = qs[i];
+  const answeredCount = Object.keys(state.answers).length;
+  return `
+  <div class="topbar">
+    <h1 style="flex:1">${esc(ex.title)}</h1>
+    <span class="timer" id="timerDisplay">--:--</span>
+  </div>
+  <div class="container fadein">
+    <div class="progressbar"><div style="width:${((i+1)/qs.length*100)}%"></div></div>
+    <p class="muted" style="margin-top:-6px">Soal ${i+1} dari ${qs.length} · ${answeredCount} terjawab</p>
+
+    <div class="card">
+      <h3 style="margin-bottom:14px">${esc(q.soal)}</h3>
+      ${["A","B","C","D"].filter(L=>q.options[L]).map(L=>`
+        <div class="option ${state.answers[i]===L?'selected':''}" onclick="selectAnswer(${i},'${L}')">
+          <div class="letter">${L}</div>
+          <div>${esc(q.options[L])}</div>
+        </div>
+      `).join("")}
+    </div>
+
+    <div class="q-nav">
+      ${qs.map((_,idx)=>`<div class="q-dot ${idx===i?'current':(state.answers[idx]?'answered':'')}" onclick="state.qIndex=${idx};render();startTimer()">${idx+1}</div>`).join("")}
+    </div>
+
+    <div class="grid2">
+      <button class="btn btn-outline" ${i===0?"disabled":""} onclick="state.qIndex--;render();startTimer()">← Sebelumnya</button>
+      ${i<qs.length-1 ?
+        `<button class="btn btn-primary" onclick="state.qIndex++;render();startTimer()">Selanjutnya →</button>` :
+        `<button class="btn btn-success" onclick="confirmSubmit()">✓ Kumpulkan</button>`
+      }
+    </div>
+  </div>`;
+}
+function selectAnswer(i, letter){ state.answers[i] = letter; render(); startTimer(); }
+function confirmSubmit(){
+  const total = state.currentExam.questions.length;
+  const answered = Object.keys(state.answers).length;
+  const msg = answered < total ? `Masih ada ${total-answered} soal belum dijawab. Tetap kumpulkan?` : "Kumpulkan jawaban sekarang?";
+  if(confirm(msg)) submitExam();
+}
+async function submitExam(){
+  clearInterval(state.timerInterval);
+  const ex = state.currentExam;
+  let correct = 0;
+  ex.questions.forEach((q,i)=>{ if(state.answers[i] === q.correct) correct++; });
+  const total = ex.questions.length;
+  const score = total ? Math.round((correct/total)*100) : 0;
+  const payload = {
+    ...state.studentInfo, score, correctCount: correct, total,
+    answers: state.answers, submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    if(firebaseReady) await db.collection("exams").doc(ex.id).collection("results").add(payload);
+    const lockKey = `ujian_done_${ex.id}_${state.studentInfo.nama.toLowerCase()}`;
+    localStorage.setItem(lockKey, "1");
+  }catch(e){ console.error(e); toast("Gagal mengirim, periksa koneksi internet"); }
+  nav("studentResult", {finalScore:score, finalCorrect:correct, finalTotal:total});
+  if(score >= 70) setTimeout(fireConfetti, 150);
+}
+function viewStudentResult(){
+  const s = state.finalScore;
+  const label = s>=90 ? "Istimewa! 🌟" : s>=70 ? "Kerja Bagus! 👏" : s>=50 ? "Cukup Baik" : "Terus Semangat Belajar";
+  return `
+  ${topbar("Hasil Ujian")}
+  <div class="container fadein result-hero">
+    <div style="font-size:46px">${s>=70?"🏆":"✅"}</div>
+    <p>Ujian selesai, ${esc(state.studentInfo.nama)}!</p>
+    <div class="result-score">${state.finalScore}</div>
+    <span class="pill gold">${label}</span>
+    <p class="muted" style="margin-top:10px">Benar ${state.finalCorrect} dari ${state.finalTotal} soal</p>
+    <button class="btn btn-primary" onclick="location.reload()">Selesai</button>
+  </div>`;
+}
+
+/* ============================================================
+   11) RENDER ROUTER
+   ============================================================ */
+function render(){
+  const app = document.getElementById("app");
+  const views = {
+    home: viewHome, teacherLogin: viewTeacherLogin, teacherDash: viewTeacherDash,
+    buildExam: viewBuildExam, examCreated: viewExamCreated, recap: viewRecap,
+    studentJoin: viewStudentJoin, studentInfo: viewStudentInfo, exam: viewExam,
+    studentResult: viewStudentResult
+  };
+  app.innerHTML = (views[state.view] || viewHome)();
+  const td = document.getElementById("timerDisplay");
+  if(td && state.timerEnd){
+    const left = Math.max(0, state.timerEnd - Date.now());
+    const m = Math.floor(left/60000), s = Math.floor((left%60000)/1000);
+    td.textContent = `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  }
+}
+render();
+</script>
+</body>
+</html>
