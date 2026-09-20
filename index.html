@@ -83,7 +83,7 @@ label{font-size:13px;font-weight:700;color:var(--primary);display:block;margin-b
 .option.selected .letter{background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#fff;transform:scale(1.08);}
 .timer{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;padding:7px 14px;border-radius:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);}
 .timer.low{background:#fff0f0;color:var(--danger);border-color:transparent;animation:pulseTimer 1s infinite;}
-@keyframes pulseTimer{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
+@keyframes pulseTimer{0%,100%{transform:scale(1);}50%{transform:scale(1.04);}}
 .progressbar{height:9px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:18px;}
 .progressbar > div{height:100%;background:linear-gradient(90deg,var(--primary),var(--gold));transition:width .35s cubic-bezier(.4,0,.2,1);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
@@ -110,9 +110,10 @@ tr:hover td{background:var(--primary-light);}
 .brand-header .school-name{font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;color:var(--primary);}
 .brand-header .acc-badge{background:linear-gradient(120deg,var(--gold),var(--gold-dark));color:#3a2a03;font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;letter-spacing:.3px;}
 #confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:999;}
-.exam-wrap{background:radial-gradient(circle at 15% 0%,rgba(11,61,145,.05),transparent 45%),radial-gradient(circle at 100% 30%,rgba(212,160,23,.06),transparent 40%);flex:1;}
+.exam-wrap{background:radial-gradient(circle at 15% 0%,rgba(11,61,145,.04),transparent 45%),radial-gradient(circle at 100% 30%,rgba(212,160,23,.045),transparent 40%);flex:1;}
 .qcounter{font-family:'Poppins',sans-serif;font-weight:700;font-size:14px;color:var(--primary);}
-.q-card{border:1px solid var(--border);position:relative;}
+.q-card{border:1px solid var(--border);position:relative;padding-top:22px;}
+.q-card::before{content:"";position:absolute;top:0;left:22px;right:22px;height:3px;border-radius:0 0 4px 4px;background:linear-gradient(90deg,var(--gold),var(--primary));}
 .q-badge{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--primary-2));color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(11,61,145,.25);}
 .flag-btn{background:var(--gold-light);border:1.5px solid transparent;color:var(--gold-dark);width:36px;height:36px;border-radius:11px;font-size:18px;cursor:pointer;transition:.15s;}
 .flag-btn.active{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#fff;box-shadow:0 4px 12px rgba(212,160,23,.35);}
@@ -124,13 +125,31 @@ tr:hover td{background:var(--primary-light);}
 .modal-card{background:#fff;border-radius:22px;padding:32px 26px;max-width:380px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3);}
 .modal-quote-icon{font-size:46px;color:var(--gold);font-family:Georgia,serif;line-height:1;margin-bottom:6px;}
 .modal-quote-text{font-family:'Poppins',sans-serif;font-size:16px;font-weight:600;color:var(--primary);line-height:1.6;margin-bottom:20px;}
+.faq-card{max-width:440px;text-align:left;max-height:80vh;display:flex;flex-direction:column;}
+.faq-list{overflow-y:auto;padding-right:4px;}
+.faq-item{border-bottom:1px solid var(--border);padding:12px 0;}
+.faq-item:last-child{border-bottom:none;}
+.faq-q{font-weight:700;color:var(--primary);font-size:14px;margin-bottom:5px;}
+.faq-a{font-size:13.5px;color:var(--muted);line-height:1.55;}
+.tatib-card{border:1.5px solid var(--gold-light);background:linear-gradient(160deg,#fffdf6,#fff);}
+.tatib-list{margin:0 0 14px;padding-left:18px;color:var(--text);font-size:13.5px;line-height:1.7;}
+.tatib-list li{margin-bottom:6px;}
+.tatib-quote{background:var(--primary-light);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 14px;font-size:13px;color:var(--primary);font-style:italic;line-height:1.6;margin-bottom:14px;}
+.tatib-check{display:flex;align-items:flex-start;gap:10px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;}
+.camera-box{width:100%;max-width:280px;aspect-ratio:1/1;margin:0 auto 6px;border-radius:20px;overflow:hidden;background:var(--navy-deep);border:3px solid var(--gold);position:relative;}
+.camera-box video, .camera-box img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb{width:36px;height:36px;border-radius:50%;object-fit:cover;cursor:pointer;border:2px solid var(--gold);}
+.photo-thumb-placeholder{width:36px;height:36px;border-radius:50%;background:var(--border);display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);}
+@keyframes qSlideIn{from{opacity:0;transform:translateX(10px);}to{opacity:1;transform:translateX(0);}}
+.q-transition{animation:qSlideIn .28s cubic-bezier(.4,0,.2,1);}
 @keyframes screenFlash{
-  0%,100%{box-shadow:inset 0 0 0 0 rgba(220,38,38,0);}
-  50%{box-shadow:inset 0 0 70px 14px rgba(220,38,38,.4);}
+  0%,100%{box-shadow:inset 0 0 0 0 rgba(212,160,23,0);}
+  50%{box-shadow:inset 0 0 55px 10px rgba(212,160,23,.22);}
 }
-body.time-critical{animation:screenFlash 1s ease-in-out infinite;}
-.time-banner{display:none;text-align:center;background:linear-gradient(120deg,#dc2626,#b91c1c);color:#fff;font-weight:700;font-size:13px;padding:8px;border-radius:10px;margin-bottom:12px;animation:pulseTimer 1s infinite;}
-body.time-critical .time-banner{display:block;}
+body.time-critical{animation:screenFlash 1.6s ease-in-out infinite;}
+.time-banner{display:none;text-align:center;background:linear-gradient(120deg,#b91c1c,#7f1d1d);color:#fff;font-weight:700;font-size:13px;padding:9px;border-radius:11px;margin-bottom:12px;}
+body.time-critical .time-banner{display:block;animation:bannerFade 1.6s ease-in-out infinite;}
+@keyframes bannerFade{0%,100%{opacity:1;}50%{opacity:.75;}}
 </style>
 </head>
 <body>
@@ -258,10 +277,11 @@ function esc(s){ return String(s??"").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"
 /* ============================================================
    3) TOP BAR
    ============================================================ */
-function topbar(title, onBack){
+function topbar(title, onBack, faqType){
   return `<div class="topbar">
     ${onBack ? `<button class="back" onclick="${onBack}">←</button>` : ""}
-    <h1>${esc(title)}</h1>
+    <h1 style="flex:1">${esc(title)}</h1>
+    ${faqType ? `<button class="back" onclick="openFAQ('${faqType}')" title="Bantuan">?</button>` : ""}
   </div>`;
 }
 
@@ -314,7 +334,7 @@ function viewHome(){
    ============================================================ */
 function viewTeacherLogin(){
   return `
-  ${topbar("Masuk sebagai Guru", "nav('home')")}
+  ${topbar("Masuk sebagai Guru", "nav('home')", "guru")}
   <div class="container fadein">
     <div class="card">
       <label>Kata sandi guru</label>
@@ -343,7 +363,7 @@ async function loadExamList(){
 function viewTeacherDash(){
   const list = state.examList;
   return `
-  ${topbar("Dashboard Guru", "nav('home')")}
+  ${topbar("Dashboard Guru", "nav('home')", "guru")}
   <div class="container fadein">
     <button class="btn btn-primary" onclick="startNewExam()">+ Buat Ujian Baru</button>
     <div style="height:16px"></div>
@@ -375,7 +395,7 @@ function startNewExam(){
 function viewBuildExam(){
   const d = state.examDraft;
   return `
-  ${topbar("Buat Ujian", "nav('teacherDash')")}
+  ${topbar("Buat Ujian", "nav('teacherDash')", "guru")}
   <div class="container fadein">
     <div class="card">
       <label>Judul Ujian</label>
@@ -495,7 +515,7 @@ async function saveExam(){
 function viewExamCreated(){
   const ex = state.createdExam;
   return `
-  ${topbar("Ujian Dibuat", "nav('teacherDash')")}
+  ${topbar("Ujian Dibuat", "nav('teacherDash')", "guru")}
   <div class="container fadein center">
     <div class="card">
       <div style="font-size:44px">🎉</div>
@@ -533,7 +553,7 @@ function viewRecap(){
   const min = filtered.length ? Math.min(...filtered.map(r=>r.score)) : "-";
 
   return `
-  ${topbar("Rekap Hasil", "nav('teacherDash')")}
+  ${topbar("Rekap Hasil", "nav('teacherDash')", "guru")}
   <div class="container fadein">
     <div class="card">
       <h3>${esc(ex.title)}</h3>
@@ -564,8 +584,10 @@ function viewRecap(){
     ${filtered.length===0 ? `<div class="empty"><div class="icon">🕒</div>Belum ada siswa yang mengumpulkan</div>` : `
     <div class="card" style="overflow-x:auto">
       <table>
-        <tr><th>Nama</th><th>Kelas</th><th>Jurusan</th><th>Nilai</th><th>Pelanggaran</th></tr>
-        ${filtered.map(r=>`<tr><td>${esc(r.nama)}</td><td>${esc(r.kelas)}</td><td>${esc(r.jurusan)}</td><td><b>${r.score}</b></td><td>${r.violations ? `<span style="color:var(--danger);font-weight:700">${r.violations}x</span>` : '<span class="muted">-</span>'}</td></tr>`).join("")}
+        <tr><th>Foto</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Jurusan</th><th>Nilai</th><th>Pelanggaran</th></tr>
+        ${filtered.map(r=>`<tr>
+          <td>${r.foto ? `<img class="photo-thumb" src="${r.foto}" onclick="openPhotoModal('${r.id}')">` : `<span class="photo-thumb-placeholder">?</span>`}</td>
+          <td>${esc(r.nama)}</td><td>${r.gender==='Laki-laki'?'L':r.gender==='Perempuan'?'P':'-'}</td><td>${esc(r.kelas)}</td><td>${esc(r.jurusan)}</td><td><b>${r.score}</b></td><td>${r.violations ? `<span style="color:var(--danger);font-weight:700">${r.violations}x</span>` : '<span class="muted">-</span>'}</td></tr>`).join("")}
       </table>
     </div>`}
   </div>`;
@@ -575,8 +597,10 @@ function exportRecap(){
   const f = state.recapFilter;
   const filtered = state.recapResults.filter(r => (!f.kelas || r.kelas===f.kelas) && (!f.jurusan || r.jurusan===f.jurusan));
   const data = filtered.map(r=>({
-    Nama:r.nama, Kelas:r.kelas, Jurusan:r.jurusan, ProgramStudi:r.prodi||"",
-    Nilai:r.score, BenarBenar:r.correctCount, TotalSoal:r.total, Pelanggaran:r.violations||0
+    Nama:r.nama, JenisKelamin:r.gender||"", TempatTanggalLahir:r.ttl||"",
+    Kelas:r.kelas, Jurusan:r.jurusan, ProgramStudi:r.prodi||"",
+    Nilai:r.score, BenarBenar:r.correctCount, TotalSoal:r.total, Pelanggaran:r.violations||0,
+    WaktuPelaksanaan:r.waktuUjian||""
   }));
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
@@ -589,7 +613,7 @@ function exportRecap(){
    ============================================================ */
 function viewStudentJoin(){
   return `
-  ${topbar("Masuk Ujian", "nav('home')")}
+  ${topbar("Masuk Ujian", "nav('home')", "siswa")}
   <div class="container fadein">
     <div class="card">
       <label>Kode Ujian</label>
@@ -613,39 +637,153 @@ async function findExam(){
 function viewStudentInfo(){
   const ex = state.currentExam;
   return `
-  ${topbar("Identitas Peserta", "nav('studentJoin')")}
+  ${topbar("Identitas Peserta", "nav('studentJoin')", "siswa")}
   <div class="container fadein">
     <div class="card">
       <h3>${esc(ex.title)}</h3>
       <p class="muted">${(ex.questions||[]).length} soal · ${ex.duration} menit</p>
-      <div style="background:var(--primary-light);border-radius:12px;padding:12px 14px;margin-top:6px">
-        <p style="margin:0;font-size:12.5px;color:var(--primary)">🔒 Sistem mendeteksi jika Anda berpindah tab/aplikasi lain selama ujian berlangsung. Tetap fokus di halaman ini sampai selesai.</p>
+    </div>
+    <div class="card tatib-card">
+      <h3 style="color:var(--gold-dark)">📜 Tata Tertib Ujian</h3>
+      <ul class="tatib-list">
+        <li>Kerjakan ujian secara <b>mandiri dan jujur</b>, tanpa bantuan orang lain, catatan, atau sumber apa pun di luar izin guru.</li>
+        <li>Dilarang membuka aplikasi/tab lain, mencontek, atau bekerja sama dengan peserta lain selama ujian berlangsung.</li>
+        <li>Setiap perpindahan tab/aplikasi akan terdeteksi sistem dan dilaporkan ke guru.</li>
+        <li>Gunakan waktu yang tersedia dengan bijak; jawaban otomatis terkumpul saat waktu habis.</li>
+      </ul>
+      <div class="tatib-quote">
+        "Sesungguhnya Allah Maha Melihat apa yang kamu kerjakan." Setiap jawaban yang kamu tulis, sekecil apa pun, adalah bentuk kejujuran pada dirimu sendiri dan pada-Nya — jauh lebih berharga daripada sekadar angka.
       </div>
+      <label class="tatib-check">
+        <input type="checkbox" id="tatib_agree" style="width:auto;margin:0" onchange="document.getElementById('btnMulai').disabled=!this.checked">
+        <span>Saya menyatakan akan mengerjakan ujian ini dengan jujur dan penuh integritas.</span>
+      </label>
     </div>
     <div class="card">
       <label>Nama Lengkap</label>
-      <input id="s_nama" placeholder="Nama Anda">
+      <input id="s_nama" placeholder="NAMA ANDA" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+      <label>Jenis Kelamin</label>
+      <select id="s_gender">
+        <option value="">Pilih jenis kelamin</option>
+        <option value="Laki-laki">Laki-laki</option>
+        <option value="Perempuan">Perempuan</option>
+      </select>
+      <div class="grid2">
+        <div><label>Tempat Lahir</label><input id="s_tempatlahir" placeholder="Contoh: Garut"></div>
+        <div><label>Tanggal Lahir</label><input id="s_tgllahir" type="date"></div>
+      </div>
       <label>Kelas</label>
       <input id="s_kelas" placeholder="Contoh: X-1" value="${esc(ex.kelas||"")}">
       <label>Jurusan</label>
       <input id="s_jurusan" placeholder="Contoh: IPA" value="${esc(ex.jurusan||"")}">
       <label>Program Studi (opsional)</label>
       <input id="s_prodi" placeholder="opsional" value="${esc(ex.prodi||"")}">
-      <button class="btn btn-primary" onclick="beginExam()">Mulai Ujian</button>
+      <label>Waktu Pelaksanaan Ujian</label>
+      <input id="s_waktu" value="${nowLabel()}" readonly style="background:var(--primary-light);color:var(--primary);font-weight:600">
+      <button class="btn btn-primary" id="btnMulai" disabled onclick="proceedToPhoto()">Lanjut ke Verifikasi Wajah →</button>
     </div>
   </div>`;
 }
-function beginExam(){
-  const nama = document.getElementById("s_nama").value.trim();
+function nowLabel(){
+  const d = new Date();
+  return d.toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long",year:"numeric"}) + ", " + d.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
+}
+
+/* ============================================================
+   10b) VERIFIKASI WAJAH (kamera)
+   ============================================================ */
+let camStream = null;
+function proceedToPhoto(){
+  const nama = document.getElementById("s_nama").value.trim().toUpperCase();
+  const gender = document.getElementById("s_gender").value;
+  const tempatLahir = document.getElementById("s_tempatlahir").value.trim();
+  const tglLahir = document.getElementById("s_tgllahir").value;
   const kelas = document.getElementById("s_kelas").value.trim();
   const jurusan = document.getElementById("s_jurusan").value.trim();
   const prodi = document.getElementById("s_prodi").value.trim();
+  const waktuUjian = document.getElementById("s_waktu").value;
   if(!nama || !kelas) return toast("Nama dan kelas wajib diisi");
+  if(!gender) return toast("Pilih jenis kelamin");
+  if(!tempatLahir || !tglLahir) return toast("Tempat dan tanggal lahir wajib diisi");
 
   const lockKey = `ujian_done_${state.currentExam.id}_${nama.toLowerCase()}`;
   if(localStorage.getItem(lockKey)) return toast("Anda sudah mengumpulkan ujian ini sebelumnya");
 
-  state.studentInfo = {nama, kelas, jurusan, prodi};
+  const tglLahirLabel = new Date(tglLahir+"T00:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"});
+  state.pendingStudentInfo = {
+    nama, kelas, jurusan, prodi, gender,
+    tempatLahir, tanggalLahir: tglLahirLabel,
+    ttl: `${tempatLahir}, ${tglLahirLabel}`,
+    waktuUjian
+  };
+  state.capturedPhoto = null;
+  nav("studentPhoto");
+}
+function viewStudentPhoto(){
+  return `
+  ${topbar("Verifikasi Wajah", "backFromPhoto()", "siswa")}
+  <div class="container fadein center">
+    <div class="card">
+      <p style="margin-bottom:14px">Ambil foto wajah Anda dengan jelas sebagai verifikasi identitas peserta ujian.</p>
+      <div class="camera-box">
+        <video id="camVideo" autoplay playsinline muted style="display:${state.capturedPhoto?'none':'block'}"></video>
+        ${state.capturedPhoto ? `<img id="camPreview" src="${state.capturedPhoto}">` : ""}
+      </div>
+      <canvas id="camCanvas" style="display:none"></canvas>
+      <p class="muted" id="camStatus" style="margin-top:10px">${state.capturedPhoto ? "Foto tersimpan, periksa sekali lagi sebelum lanjut." : "Memuat kamera..."}</p>
+      ${!state.capturedPhoto ? `
+        <button class="btn btn-primary" onclick="capturePhoto()">📸 Ambil Foto</button>
+        <div style="height:8px"></div>
+        <button class="btn btn-outline btn-sm" onclick="skipPhoto()">Lewati (kamera tidak tersedia)</button>
+      ` : `
+        <div class="grid2">
+          <button class="btn btn-outline" onclick="retakePhoto()">↺ Ambil Ulang</button>
+          <button class="btn btn-success" onclick="beginExam()">✓ Mulai Ujian</button>
+        </div>
+      `}
+    </div>
+  </div>`;
+}
+async function initCamera(){
+  try{
+    camStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}, audio:false});
+    const video = document.getElementById("camVideo");
+    if(video) video.srcObject = camStream;
+    const st = document.getElementById("camStatus");
+    if(st) st.textContent = "Posisikan wajah di tengah bingkai, lalu ambil foto.";
+  }catch(e){
+    console.error(e);
+    const st = document.getElementById("camStatus");
+    if(st) st.textContent = "⚠ Kamera tidak dapat diakses (izin ditolak atau tidak tersedia). Anda bisa melewati langkah ini.";
+  }
+}
+function stopCamera(){
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream = null; }
+}
+function backFromPhoto(){ stopCamera(); nav("studentInfo"); }
+function capturePhoto(){
+  const video = document.getElementById("camVideo");
+  if(!video || !video.videoWidth) return toast("Kamera belum siap, coba lagi sebentar");
+  const canvas = document.getElementById("camCanvas");
+  const size = 380;
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const scale = Math.max(size/vw, size/vh);
+  const sw = size/scale, sh = size/scale;
+  const sx = (vw-sw)/2, sy = (vh-sh)/2;
+  ctx.save();
+  ctx.translate(size,0); ctx.scale(-1,1);
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, size, size);
+  ctx.restore();
+  state.capturedPhoto = canvas.toDataURL("image/jpeg", 0.6);
+  stopCamera();
+  render();
+}
+function retakePhoto(){ state.capturedPhoto = null; render(); }
+function skipPhoto(){ state.capturedPhoto = null; stopCamera(); beginExam(); }
+function beginExam(){
+  state.studentInfo = {...state.pendingStudentInfo, foto: state.capturedPhoto || null};
   state.answers = {};
   state.flagged = {};
   state.violations = 0;
@@ -710,13 +848,16 @@ function viewExam(){
   const q = qs[i];
   const answeredCount = Object.keys(state.answers).length;
   const isFlagged = !!state.flagged[i];
+  const animClass = state.qAnim ? "q-transition" : "";
+  state.qAnim = false;
   return `
   <div class="topbar">
     <h1 style="flex:1;font-size:15px;opacity:.92">${esc(ex.title)}</h1>
     <span class="timer" id="timerDisplay">--:--</span>
+    <button class="back" onclick="openFAQ('siswa')" title="Bantuan">?</button>
   </div>
   <div class="exam-wrap">
-  <div class="container fadein" key="${i}">
+  <div class="container" key="${i}">
     <div class="time-banner">⏰ Waktu hampir habis! Segera selesaikan dan kumpulkan jawaban Anda.</div>
     <div class="row-between" style="margin-bottom:8px">
       <span class="qcounter">Soal <b>${i+1}</b> <span class="muted">/ ${qs.length}</span></span>
@@ -724,7 +865,7 @@ function viewExam(){
     </div>
     <div class="progressbar"><div style="width:${((i+1)/qs.length*100)}%"></div></div>
 
-    <div class="card q-card">
+    <div class="card q-card ${animClass}">
       <div class="row-between" style="align-items:flex-start;margin-bottom:12px">
         <div class="q-badge">${i+1}</div>
         <button class="flag-btn ${isFlagged?'active':''}" onclick="toggleFlag(${i})" title="Tandai untuk ditinjau">${isFlagged?'★':'☆'}</button>
@@ -741,19 +882,79 @@ function viewExam(){
     </div>
 
     <div class="q-nav">
-      ${qs.map((_,idx)=>`<div class="q-dot ${idx===i?'current':(state.answers[idx]?'answered':'')} ${state.flagged[idx]?'flagged':''}" onclick="state.qIndex=${idx};render();startTimer()">${idx+1}</div>`).join("")}
+      ${qs.map((_,idx)=>`<div class="q-dot ${idx===i?'current':(state.answers[idx]?'answered':'')} ${state.flagged[idx]?'flagged':''}" onclick="goToQuestion(${idx})">${idx+1}</div>`).join("")}
     </div>
 
     <div class="grid2">
-      <button class="btn btn-outline" ${i===0?"disabled":""} onclick="state.qIndex--;render();startTimer()">← Sebelumnya</button>
+      <button class="btn btn-outline" ${i===0?"disabled":""} onclick="goToQuestion(${i-1})">← Sebelumnya</button>
       ${i<qs.length-1 ?
-        `<button class="btn btn-primary" onclick="state.qIndex++;render();startTimer()">Selanjutnya →</button>` :
+        `<button class="btn btn-primary" onclick="goToQuestion(${i+1})">Selanjutnya →</button>` :
         `<button class="btn btn-success" onclick="confirmSubmit()">✓ Kumpulkan</button>`
       }
     </div>
   </div>
   </div>`;
 }
+function goToQuestion(idx){ state.qIndex = idx; state.qAnim = true; render(); startTimer(); }
+const FAQ_GURU = [
+  {q:"Bagaimana cara membuat ujian baru?", a:"Di Dashboard Guru, klik \"+ Buat Ujian Baru\", isi judul, periode (UTS/UAS), kelas, jurusan, dan durasi, lalu tambahkan soal manual atau impor dari Excel."},
+  {q:"Bagaimana cara mengimpor soal dari Excel?", a:"Unduh template Excel di halaman Buat Ujian, isi sesuai kolom yang tersedia (Soal, PilihanA-D, JawabanBenar), lalu unggah kembali file tersebut."},
+  {q:"Kenapa saya tidak bisa mengedit atau menghapus ujian dari aplikasi?", a:"Ini sengaja dikunci demi keamanan data — supaya soal dan nilai siswa tidak bisa diubah sembarangan. Untuk hapus, gunakan Firebase Console."},
+  {q:"Bagaimana cara melihat rekap nilai siswa?", a:"Klik salah satu ujian di Dashboard Guru untuk membuka halaman Rekap Hasil, lengkap dengan filter kelas/jurusan dan tombol export ke Excel."},
+  {q:"Kode ujian saya hilang, bagaimana cara melihatnya lagi?", a:"Kode ujian selalu ditampilkan sebagai pill di samping judul ujian pada daftar Dashboard Guru."},
+  {q:"Apakah aman jika kata sandi guru diketahui orang lain?", a:"Segera ganti TEACHER_PASSCODE di dalam file HTML dan upload ulang, karena kata sandi ini yang membatasi akses ke fitur pembuatan ujian."}
+];
+const FAQ_SISWA = [
+  {q:"Kode ujian saya tidak ditemukan, kenapa?", a:"Pastikan kode diketik persis 6 karakter tanpa spasi. Jika masih gagal, tanyakan ke guru apakah ujian sudah dibuat/aktif."},
+  {q:"Bolehkah saya keluar dari halaman ujian sebentar?", a:"Sebaiknya tidak. Sistem mendeteksi jika Anda pindah tab/aplikasi lain, dan pelanggaran akan tercatat serta dilaporkan ke guru."},
+  {q:"Apa fungsi tombol bintang (⭐) di soal?", a:"Untuk menandai soal yang masih ragu-ragu, supaya mudah ditemukan lagi sebelum mengumpulkan jawaban."},
+  {q:"Bagaimana jika waktu habis sebelum saya selesai?", a:"Jawaban yang sudah dipilih akan otomatis terkumpul saat waktu mencapai 00:00, jadi pastikan menjawab soal penting lebih dulu."},
+  {q:"Bisakah saya mengulang ujian yang sudah dikumpulkan?", a:"Tidak bisa. Sistem hanya mengizinkan satu kali pengumpulan untuk setiap nama pada ujian yang sama."},
+  {q:"Bagaimana cara menyimpan hasil ujian saya?", a:"Setelah selesai, klik tombol \"Unduh Hasil Ujian\" di layar hasil untuk mengunduh kartu hasil sebagai gambar."}
+];
+function openPhotoModal(resultId){
+  const r = state.recapResults.find(x=>x.id===resultId);
+  if(!r || !r.foto) return;
+  state.photoModal = {url:r.foto, nama:r.nama};
+  render();
+}
+function closePhotoModal(){ state.photoModal = null; render(); }
+function renderPhotoModal(){
+  if(!state.photoModal) return "";
+  return `
+  <div class="modal-overlay" onclick="if(event.target===this) closePhotoModal()">
+    <div class="modal-card" style="max-width:340px">
+      <h3 style="margin-bottom:12px">${esc(state.photoModal.nama)}</h3>
+      <img src="${state.photoModal.url}" style="width:100%;border-radius:16px;border:3px solid var(--gold);margin-bottom:14px">
+      <button class="btn btn-primary" onclick="closePhotoModal()">Tutup</button>
+    </div>
+  </div>`;
+}
+
+function openFAQ(type){ state.faqOpen = true; state.faqType = type; render(); }
+function closeFAQ(){ state.faqOpen = false; render(); }
+function renderFAQModal(){
+  if(!state.faqOpen) return "";
+  const items = state.faqType === "guru" ? FAQ_GURU : FAQ_SISWA;
+  return `
+  <div class="modal-overlay" onclick="if(event.target===this) closeFAQ()">
+    <div class="modal-card faq-card">
+      <div class="row-between" style="margin-bottom:10px">
+        <h3 style="margin:0">❓ Pertanyaan Umum</h3>
+        <button class="back" style="background:var(--primary-light);color:var(--primary)" onclick="closeFAQ()">✕</button>
+      </div>
+      <div class="faq-list">
+        ${items.map(f=>`
+          <div class="faq-item">
+            <div class="faq-q">${esc(f.q)}</div>
+            <div class="faq-a">${esc(f.a)}</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  </div>`;
+}
+
 function toggleFlag(i){ state.flagged[i] = !state.flagged[i]; render(); startTimer(); }
 function selectAnswer(i, letter){ state.answers[i] = letter; render(); startTimer(); }
 function confirmSubmit(){
@@ -839,6 +1040,11 @@ function downloadResultCard(){
   ctx.fillStyle = "#5b6b8c";
   ctx.font = "500 20px Inter, sans-serif";
   ctx.fillText(`${s.kelas}${s.jurusan ? " · " + s.jurusan : ""}${s.prodi ? " · " + s.prodi : ""}`, W/2, y);
+  if(s.ttl){
+    y += 32;
+    ctx.font = "400 17px Inter, sans-serif";
+    ctx.fillText(`TTL: ${s.ttl}`, W/2, y);
+  }
 
   // score circle
   const cx = W/2, cy = y+220, r = 140;
@@ -892,7 +1098,7 @@ function viewStudentResult(){
   const label = s>=90 ? "Istimewa! 🌟" : s>=70 ? "Kerja Bagus! 👏" : s>=50 ? "Cukup Baik" : "Terus Semangat Belajar";
   const violations = state.violations||0;
   return `
-  ${topbar("Hasil Ujian")}
+  ${topbar("Hasil Ujian", null, "siswa")}
   <div class="container fadein result-hero">
     <div style="font-size:46px">${s>=70?"🏆":"✅"}</div>
     <p>Ujian selesai, ${esc(state.studentInfo.nama)}!</p>
@@ -924,10 +1130,11 @@ function render(){
   const views = {
     home: viewHome, teacherLogin: viewTeacherLogin, teacherDash: viewTeacherDash,
     buildExam: viewBuildExam, examCreated: viewExamCreated, recap: viewRecap,
-    studentJoin: viewStudentJoin, studentInfo: viewStudentInfo, exam: viewExam,
+    studentJoin: viewStudentJoin, studentInfo: viewStudentInfo, studentPhoto: viewStudentPhoto, exam: viewExam,
     studentResult: viewStudentResult
   };
-  app.innerHTML = (views[state.view] || viewHome)();
+  app.innerHTML = (views[state.view] || viewHome)() + renderFAQModal() + renderPhotoModal();
+  if(state.view === "studentPhoto" && !state.capturedPhoto) setTimeout(initCamera, 100);
   const td = document.getElementById("timerDisplay");
   if(td && state.timerEnd){
     const left = Math.max(0, state.timerEnd - Date.now());
