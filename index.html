@@ -60,7 +60,7 @@ label{font-size:13px;font-weight:700;color:var(--primary);display:block;margin-b
 .role-card{padding:30px 20px;text-align:center;border-radius:22px;position:relative;overflow:hidden;}
 .role-card::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(11,61,145,.04),rgba(212,160,23,.05));opacity:0;transition:opacity .2s;}
 .role-card:hover::before{opacity:1;}
-.role-icon{font-size:46px;margin-bottom:10px;filter:drop-shadow(0 4px 10px rgba(11,61,145,.15));}
+.role-icon{margin-bottom:12px;display:flex;justify-content:center;filter:drop-shadow(0 4px 10px rgba(11,61,145,.18));}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .pill{display:inline-block;padding:5px 12px;border-radius:999px;background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:700;letter-spacing:.02em;}
 .pill.gold{background:var(--gold-light);color:var(--gold-dark);}
@@ -110,6 +110,27 @@ tr:hover td{background:var(--primary-light);}
 .brand-header .school-name{font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;color:var(--primary);}
 .brand-header .acc-badge{background:linear-gradient(120deg,var(--gold),var(--gold-dark));color:#3a2a03;font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;letter-spacing:.3px;}
 #confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:999;}
+.exam-wrap{background:radial-gradient(circle at 15% 0%,rgba(11,61,145,.05),transparent 45%),radial-gradient(circle at 100% 30%,rgba(212,160,23,.06),transparent 40%);flex:1;}
+.qcounter{font-family:'Poppins',sans-serif;font-weight:700;font-size:14px;color:var(--primary);}
+.q-card{border:1px solid var(--border);position:relative;}
+.q-badge{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--primary-2));color:#fff;font-family:'Poppins',sans-serif;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(11,61,145,.25);}
+.flag-btn{background:var(--gold-light);border:1.5px solid transparent;color:var(--gold-dark);width:36px;height:36px;border-radius:11px;font-size:18px;cursor:pointer;transition:.15s;}
+.flag-btn.active{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#fff;box-shadow:0 4px 12px rgba(212,160,23,.35);}
+.flag-btn:active{transform:scale(.9);}
+.q-dot{position:relative;}
+.q-dot.flagged::after{content:"";position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--gold);border:1.5px solid #fff;}
+.result-card-preview{border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(11,61,145,.15);margin-bottom:14px;max-width:100%;display:block;}
+.modal-overlay{position:fixed;inset:0;background:rgba(7,29,71,.72);display:flex;align-items:center;justify-content:center;z-index:200;padding:24px;backdrop-filter:blur(3px);}
+.modal-card{background:#fff;border-radius:22px;padding:32px 26px;max-width:380px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+.modal-quote-icon{font-size:46px;color:var(--gold);font-family:Georgia,serif;line-height:1;margin-bottom:6px;}
+.modal-quote-text{font-family:'Poppins',sans-serif;font-size:16px;font-weight:600;color:var(--primary);line-height:1.6;margin-bottom:20px;}
+@keyframes screenFlash{
+  0%,100%{box-shadow:inset 0 0 0 0 rgba(220,38,38,0);}
+  50%{box-shadow:inset 0 0 70px 14px rgba(220,38,38,.4);}
+}
+body.time-critical{animation:screenFlash 1s ease-in-out infinite;}
+.time-banner{display:none;text-align:center;background:linear-gradient(120deg,#dc2626,#b91c1c);color:#fff;font-weight:700;font-size:13px;padding:8px;border-radius:10px;margin-bottom:12px;animation:pulseTimer 1s infinite;}
+body.time-critical .time-banner{display:block;}
 </style>
 </head>
 <body>
@@ -183,6 +204,20 @@ function toast(msg, ms=2400){
   document.body.appendChild(t);
   setTimeout(()=>t.remove(), ms);
 }
+const WISDOM_QUOTES = [
+  "Nilai hari ini bukan penentu masa depanmu, tapi kerja keras yang konsisten yang akan membawamu ke sana.",
+  "Setiap usaha yang sungguh-sungguh tidak pernah sia-sia, meski hasilnya belum terlihat sekarang.",
+  "Kegagalan hanyalah jeda sebelum keberhasilan, bukan akhir dari perjalanan.",
+  "Ilmu yang bermanfaat adalah ilmu yang diamalkan, bukan sekadar dihafal untuk ujian.",
+  "Jangan bandingkan dirimu dengan orang lain, bandingkan dirimu hari ini dengan dirimu kemarin.",
+  "Proses belajar yang jujur lebih berharga daripada nilai sempurna yang didapat dengan curang.",
+  "Kesulitan yang kamu hadapi hari ini sedang membentuk kekuatan yang kamu butuhkan esok hari.",
+  "Terus melangkah walau pelan, karena berhenti sama sekali tidak akan membawamu ke mana pun.",
+  "Kejujuran dalam belajar adalah pondasi karakter yang akan kamu bawa seumur hidup.",
+  "Semangat belajar hari ini adalah investasi terbaik untuk masa depanmu."
+];
+function randomQuote(){ return WISDOM_QUOTES[Math.floor(Math.random()*WISDOM_QUOTES.length)]; }
+
 function fireConfetti(){
   let canvas = document.getElementById("confetti-canvas");
   if(!canvas){
@@ -244,12 +279,28 @@ function viewHome(){
     <p class="center" style="margin-top:2px">Pilih peran Anda untuk melanjutkan.</p>
     <div class="grid2">
       <div class="card tap role-card" onclick="nav('teacherLogin')">
-        <div class="role-icon">👩‍🏫</div>
+        <div class="role-icon">
+          <svg width="46" height="46" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="23" fill="url(#gGuru)"/>
+            <path d="M24 14a6 6 0 100 12 6 6 0 000-12z" stroke="#fff" stroke-width="2"/>
+            <path d="M13 36c1.5-6 6-9.5 11-9.5S33.5 30 35 36" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M15 17l9-4 9 4-9 4-9-4z" fill="#fbeecb" opacity=".9"/>
+            <defs><linearGradient id="gGuru" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#0b3d91"/><stop offset="1" stop-color="#123f9e"/></linearGradient></defs>
+          </svg>
+        </div>
         <h3>Guru</h3>
         <p class="muted" style="margin:0">Buat & kelola ujian</p>
       </div>
       <div class="card tap role-card" onclick="nav('studentJoin')">
-        <div class="role-icon">🎓</div>
+        <div class="role-icon">
+          <svg width="46" height="46" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="23" fill="url(#gSiswa)"/>
+            <rect x="14" y="13" width="20" height="24" rx="2" fill="#fff" opacity=".95"/>
+            <path d="M18 20h12M18 25h12M18 30h7" stroke="#0b3d91" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M30 28l4 4-2 5-5-2 3-7z" fill="#d4a017"/>
+            <defs><linearGradient id="gSiswa" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#d4a017"/><stop offset="1" stop-color="#a87a0c"/></linearGradient></defs>
+          </svg>
+        </div>
         <h3>Siswa</h3>
         <p class="muted" style="margin:0">Ikuti ujian</p>
       </div>
@@ -513,8 +564,8 @@ function viewRecap(){
     ${filtered.length===0 ? `<div class="empty"><div class="icon">🕒</div>Belum ada siswa yang mengumpulkan</div>` : `
     <div class="card" style="overflow-x:auto">
       <table>
-        <tr><th>Nama</th><th>Kelas</th><th>Jurusan</th><th>Nilai</th></tr>
-        ${filtered.map(r=>`<tr><td>${esc(r.nama)}</td><td>${esc(r.kelas)}</td><td>${esc(r.jurusan)}</td><td><b>${r.score}</b></td></tr>`).join("")}
+        <tr><th>Nama</th><th>Kelas</th><th>Jurusan</th><th>Nilai</th><th>Pelanggaran</th></tr>
+        ${filtered.map(r=>`<tr><td>${esc(r.nama)}</td><td>${esc(r.kelas)}</td><td>${esc(r.jurusan)}</td><td><b>${r.score}</b></td><td>${r.violations ? `<span style="color:var(--danger);font-weight:700">${r.violations}x</span>` : '<span class="muted">-</span>'}</td></tr>`).join("")}
       </table>
     </div>`}
   </div>`;
@@ -525,7 +576,7 @@ function exportRecap(){
   const filtered = state.recapResults.filter(r => (!f.kelas || r.kelas===f.kelas) && (!f.jurusan || r.jurusan===f.jurusan));
   const data = filtered.map(r=>({
     Nama:r.nama, Kelas:r.kelas, Jurusan:r.jurusan, ProgramStudi:r.prodi||"",
-    Nilai:r.score, BenarBenar:r.correctCount, TotalSoal:r.total
+    Nilai:r.score, BenarBenar:r.correctCount, TotalSoal:r.total, Pelanggaran:r.violations||0
   }));
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
@@ -567,6 +618,9 @@ function viewStudentInfo(){
     <div class="card">
       <h3>${esc(ex.title)}</h3>
       <p class="muted">${(ex.questions||[]).length} soal · ${ex.duration} menit</p>
+      <div style="background:var(--primary-light);border-radius:12px;padding:12px 14px;margin-top:6px">
+        <p style="margin:0;font-size:12.5px;color:var(--primary)">🔒 Sistem mendeteksi jika Anda berpindah tab/aplikasi lain selama ujian berlangsung. Tetap fokus di halaman ini sampai selesai.</p>
+      </div>
     </div>
     <div class="card">
       <label>Nama Lengkap</label>
@@ -593,27 +647,60 @@ function beginExam(){
 
   state.studentInfo = {nama, kelas, jurusan, prodi};
   state.answers = {};
+  state.flagged = {};
+  state.violations = 0;
   state.qIndex = 0;
   const durMs = (state.currentExam.duration||30)*60*1000;
   state.timerEnd = Date.now() + durMs;
   nav("exam");
   startTimer();
+  attachAntiCheat();
 }
 
 /* ============================================================
    10) VIEW: EXAM (siswa mengerjakan)
    ============================================================ */
+let lastViolationTime = 0;
+function markViolation(){
+  const now = Date.now();
+  if(now - lastViolationTime < 1000) return;
+  lastViolationTime = now;
+  state.violations = (state.violations||0) + 1;
+}
+function handleVisibilityChange(){
+  if(document.hidden){
+    markViolation();
+  } else if(state.violations > 0 && state.view === "exam"){
+    setTimeout(()=>{
+      alert(`⚠️ PERINGATAN UJIAN\n\nAnda terdeteksi keluar dari halaman ujian (${state.violations}x).\n\nTindakan ini tercatat otomatis dan akan dilaporkan ke guru. Mohon fokus dan tetap berada di halaman ujian sampai selesai.`);
+    }, 200);
+  }
+}
+function handleWindowBlur(){
+  if(state.view === "exam") markViolation();
+}
+function attachAntiCheat(){
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("blur", handleWindowBlur);
+}
+function detachAntiCheat(){
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
+  window.removeEventListener("blur", handleWindowBlur);
+}
+
 function startTimer(){
   clearInterval(state.timerInterval);
   state.timerInterval = setInterval(()=>{
     const left = state.timerEnd - Date.now();
-    if(left<=0){ clearInterval(state.timerInterval); toast("Waktu habis, ujian dikumpulkan otomatis"); submitExam(); return; }
+    if(left<=0){ clearInterval(state.timerInterval); document.body.classList.remove("time-critical"); toast("Waktu habis, ujian dikumpulkan otomatis"); submitExam(); return; }
     const el = document.getElementById("timerDisplay");
     if(el){
       const m = Math.floor(left/60000), s = Math.floor((left%60000)/1000);
       el.textContent = `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
       el.className = "timer" + (left < 60000 ? " low" : "");
     }
+    if(left <= 60000) document.body.classList.add("time-critical");
+    else document.body.classList.remove("time-critical");
   }, 1000);
 }
 function viewExam(){
@@ -622,27 +709,39 @@ function viewExam(){
   const i = state.qIndex;
   const q = qs[i];
   const answeredCount = Object.keys(state.answers).length;
+  const isFlagged = !!state.flagged[i];
   return `
   <div class="topbar">
-    <h1 style="flex:1">${esc(ex.title)}</h1>
+    <h1 style="flex:1;font-size:15px;opacity:.92">${esc(ex.title)}</h1>
     <span class="timer" id="timerDisplay">--:--</span>
   </div>
-  <div class="container fadein">
+  <div class="exam-wrap">
+  <div class="container fadein" key="${i}">
+    <div class="time-banner">⏰ Waktu hampir habis! Segera selesaikan dan kumpulkan jawaban Anda.</div>
+    <div class="row-between" style="margin-bottom:8px">
+      <span class="qcounter">Soal <b>${i+1}</b> <span class="muted">/ ${qs.length}</span></span>
+      <span class="muted" style="font-size:12px">${answeredCount} terjawab</span>
+    </div>
     <div class="progressbar"><div style="width:${((i+1)/qs.length*100)}%"></div></div>
-    <p class="muted" style="margin-top:-6px">Soal ${i+1} dari ${qs.length} · ${answeredCount} terjawab</p>
 
-    <div class="card">
-      <h3 style="margin-bottom:14px">${esc(q.soal)}</h3>
+    <div class="card q-card">
+      <div class="row-between" style="align-items:flex-start;margin-bottom:12px">
+        <div class="q-badge">${i+1}</div>
+        <button class="flag-btn ${isFlagged?'active':''}" onclick="toggleFlag(${i})" title="Tandai untuk ditinjau">${isFlagged?'★':'☆'}</button>
+      </div>
+      <h3 style="font-size:17px;line-height:1.5;font-weight:600">${esc(q.soal)}</h3>
+      <div style="margin-top:14px">
       ${["A","B","C","D"].filter(L=>q.options[L]).map(L=>`
         <div class="option ${state.answers[i]===L?'selected':''}" onclick="selectAnswer(${i},'${L}')">
           <div class="letter">${L}</div>
           <div>${esc(q.options[L])}</div>
         </div>
       `).join("")}
+      </div>
     </div>
 
     <div class="q-nav">
-      ${qs.map((_,idx)=>`<div class="q-dot ${idx===i?'current':(state.answers[idx]?'answered':'')}" onclick="state.qIndex=${idx};render();startTimer()">${idx+1}</div>`).join("")}
+      ${qs.map((_,idx)=>`<div class="q-dot ${idx===i?'current':(state.answers[idx]?'answered':'')} ${state.flagged[idx]?'flagged':''}" onclick="state.qIndex=${idx};render();startTimer()">${idx+1}</div>`).join("")}
     </div>
 
     <div class="grid2">
@@ -652,17 +751,24 @@ function viewExam(){
         `<button class="btn btn-success" onclick="confirmSubmit()">✓ Kumpulkan</button>`
       }
     </div>
+  </div>
   </div>`;
 }
+function toggleFlag(i){ state.flagged[i] = !state.flagged[i]; render(); startTimer(); }
 function selectAnswer(i, letter){ state.answers[i] = letter; render(); startTimer(); }
 function confirmSubmit(){
   const total = state.currentExam.questions.length;
   const answered = Object.keys(state.answers).length;
-  const msg = answered < total ? `Masih ada ${total-answered} soal belum dijawab. Tetap kumpulkan?` : "Kumpulkan jawaban sekarang?";
+  const flaggedCount = Object.values(state.flagged||{}).filter(Boolean).length;
+  let msg = "Kumpulkan jawaban sekarang?";
+  if(answered < total) msg = `Masih ada ${total-answered} soal belum dijawab. Tetap kumpulkan?`;
+  else if(flaggedCount > 0) msg = `Anda masih menandai ${flaggedCount} soal untuk ditinjau. Tetap kumpulkan?`;
   if(confirm(msg)) submitExam();
 }
 async function submitExam(){
   clearInterval(state.timerInterval);
+  detachAntiCheat();
+  document.body.classList.remove("time-critical");
   const ex = state.currentExam;
   let correct = 0;
   ex.questions.forEach((q,i)=>{ if(state.answers[i] === q.correct) correct++; });
@@ -670,6 +776,7 @@ async function submitExam(){
   const score = total ? Math.round((correct/total)*100) : 0;
   const payload = {
     ...state.studentInfo, score, correctCount: correct, total,
+    violations: state.violations||0,
     answers: state.answers, submittedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
   try{
@@ -677,12 +784,113 @@ async function submitExam(){
     const lockKey = `ujian_done_${ex.id}_${state.studentInfo.nama.toLowerCase()}`;
     localStorage.setItem(lockKey, "1");
   }catch(e){ console.error(e); toast("Gagal mengirim, periksa koneksi internet"); }
-  nav("studentResult", {finalScore:score, finalCorrect:correct, finalTotal:total});
+  nav("studentResult", {finalScore:score, finalCorrect:correct, finalTotal:total, quoteText:randomQuote(), showQuoteModal:true});
   if(score >= 70) setTimeout(fireConfetti, 150);
+}
+function downloadResultCard(){
+  const s = state.studentInfo, ex = state.currentExam;
+  const score = state.finalScore, correct = state.finalCorrect, total = state.finalTotal;
+  const label = score>=90 ? "ISTIMEWA" : score>=70 ? "SANGAT BAIK" : score>=50 ? "CUKUP BAIK" : "PERLU BELAJAR LAGI";
+
+  const canvas = document.createElement("canvas");
+  const W = 1000, H = 1300;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  // background
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,"#071d47"); bg.addColorStop(1,"#0b3d91");
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  // decorative gold circles
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = "#d4a017";
+  ctx.beginPath(); ctx.arc(W-60,80,180,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(60,H-60,220,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // white card
+  const pad = 60;
+  ctx.fillStyle = "#ffffff";
+  roundRect(ctx, pad, 220, W-pad*2, H-220-pad, 28); ctx.fill();
+
+  // header text
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#fbeecb";
+  ctx.font = "600 26px Inter, sans-serif";
+  ctx.fillText("SMKS CILEDUG AL-MUSADDADIYAH", W/2, 90);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "800 44px Poppins, sans-serif";
+  ctx.fillText("HASIL UJIAN ONLINE", W/2, 150);
+  ctx.fillStyle = "#d4a017";
+  ctx.font = "600 20px Inter, sans-serif";
+  ctx.fillText(ex.title, W/2, 190);
+
+  // body content
+  let y = 300;
+  ctx.fillStyle = "#5b6b8c";
+  ctx.font = "500 22px Inter, sans-serif";
+  ctx.fillText("Nama Peserta", W/2, y);
+  y += 46;
+  ctx.fillStyle = "#152238";
+  ctx.font = "800 40px Poppins, sans-serif";
+  ctx.fillText(s.nama, W/2, y);
+  y += 40;
+  ctx.fillStyle = "#5b6b8c";
+  ctx.font = "500 20px Inter, sans-serif";
+  ctx.fillText(`${s.kelas}${s.jurusan ? " · " + s.jurusan : ""}${s.prodi ? " · " + s.prodi : ""}`, W/2, y);
+
+  // score circle
+  const cx = W/2, cy = y+220, r = 140;
+  const grad = ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);
+  grad.addColorStop(0,"#0b3d91"); grad.addColorStop(1,"#d4a017");
+  ctx.lineWidth = 18;
+  ctx.strokeStyle = "#eef1f8";
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle = grad;
+  ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2, -Math.PI/2 + (Math.PI*2*(score/100)));
+  ctx.lineCap = "round"; ctx.stroke();
+  ctx.fillStyle = "#152238";
+  ctx.font = "800 80px Poppins, sans-serif";
+  ctx.fillText(String(score), cx, cy+28);
+
+  y = cy + r + 70;
+  ctx.fillStyle = "#0b3d91";
+  ctx.font = "700 24px Poppins, sans-serif";
+  ctx.fillText(`Benar ${correct} dari ${total} soal`, W/2, y);
+
+  y += 55;
+  const labelW = ctx.measureText(label).width + 60;
+  ctx.fillStyle = "#fbeecb";
+  roundRect(ctx, W/2 - (labelW/2), y-32, labelW, 46, 23); ctx.fill();
+  ctx.fillStyle = "#a87a0c";
+  ctx.font = "800 20px Poppins, sans-serif";
+  ctx.fillText(label, W/2, y);
+
+  y = H - pad - 40;
+  ctx.fillStyle = "#5b6b8c";
+  ctx.font = "400 16px Inter, sans-serif";
+  const tgl = new Date().toLocaleDateString("id-ID", {day:"numeric", month:"long", year:"numeric"});
+  ctx.fillText(`Dikumpulkan pada ${tgl}`, W/2, y);
+
+  const link = document.createElement("a");
+  link.download = `hasil_ujian_${s.nama.replace(/\s+/g,"_")}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
 }
 function viewStudentResult(){
   const s = state.finalScore;
   const label = s>=90 ? "Istimewa! 🌟" : s>=70 ? "Kerja Bagus! 👏" : s>=50 ? "Cukup Baik" : "Terus Semangat Belajar";
+  const violations = state.violations||0;
   return `
   ${topbar("Hasil Ujian")}
   <div class="container fadein result-hero">
@@ -691,14 +899,27 @@ function viewStudentResult(){
     <div class="result-score">${state.finalScore}</div>
     <span class="pill gold">${label}</span>
     <p class="muted" style="margin-top:10px">Benar ${state.finalCorrect} dari ${state.finalTotal} soal</p>
+    ${violations>0 ? `<p style="color:var(--danger);font-size:12px;font-weight:600">⚠ Terdeteksi ${violations}x keluar dari halaman ujian, tercatat untuk guru</p>` : ""}
+    <button class="btn btn-gold" onclick="downloadResultCard()">⬇ Unduh Hasil Ujian</button>
+    <div style="height:10px"></div>
     <button class="btn btn-primary" onclick="location.reload()">Selesai</button>
-  </div>`;
+  </div>
+  ${state.showQuoteModal ? `
+  <div class="modal-overlay" onclick="if(event.target===this){state.showQuoteModal=false;render();}">
+    <div class="modal-card fadein">
+      <div class="modal-quote-icon">❝</div>
+      <p class="modal-quote-text">${esc(state.quoteText)}</p>
+      <button class="btn btn-primary" onclick="state.showQuoteModal=false;render()">Terima Kasih</button>
+    </div>
+  </div>` : ""}
+  `;
 }
 
 /* ============================================================
    11) RENDER ROUTER
    ============================================================ */
 function render(){
+  if(state.view !== "exam") document.body.classList.remove("time-critical");
   const app = document.getElementById("app");
   const views = {
     home: viewHome, teacherLogin: viewTeacherLogin, teacherDash: viewTeacherDash,
