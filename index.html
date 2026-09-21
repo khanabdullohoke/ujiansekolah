@@ -216,6 +216,9 @@ const state = {
   recapFilter: { kelas: "", jurusan: "" }
 };
 
+const MAX_ESAI = 10; // batas maksimal soal esai per ujian
+function countEsai(obj){ return ((obj && obj.questions) || []).filter(q=>q.type==="esai").length; }
+
 function nav(view, extra){ state.view = view; if(extra) Object.assign(state, extra); render(); }
 function toast(msg, ms=2400){
   const t = document.createElement("div");
@@ -375,7 +378,7 @@ function viewTeacherDash(){
             <div>
               <span class="badge ${ex.periode==='UAS'?'warn':'ok'}">${esc(ex.periode||'UTS')}</span>
               <b style="display:block;margin-top:4px">${esc(ex.title)}</b>
-              <span class="muted">${esc(ex.kelas)} · ${esc(ex.jurusan)} · ${(ex.questions||[]).length} soal</span>
+              <span class="muted">${esc(ex.kelas)} · ${esc(ex.jurusan)} · ${(ex.questions||[]).length} soal${countEsai(ex)>0 ? ` (${countEsai(ex)} esai)` : ""}</span>
             </div>
             <span class="pill">${esc(ex.code)}</span>
           </div>
@@ -417,7 +420,7 @@ function viewBuildExam(){
 
     <div class="card">
       <div class="row-between"><h3>Impor Soal dari Excel</h3></div>
-      <p style="margin-bottom:10px">Kolom: <b>Soal, PilihanA, PilihanB, PilihanC, PilihanD, JawabanBenar</b> (isi JawabanBenar dengan huruf A/B/C/D).</p>
+      <p style="margin-bottom:10px">Kolom: <b>Tipe, Soal, PilihanA, PilihanB, PilihanC, PilihanD, JawabanBenar, KunciJawaban</b>. Isi <b>Tipe</b> dengan "PG" atau "Esai". Soal PG wajib mengisi PilihanA-D & JawabanBenar (A/B/C/D). Soal Esai cukup mengisi kolom Soal (KunciJawaban opsional). Maksimal ${MAX_ESAI} soal esai per ujian.</p>
       <button class="btn btn-outline" onclick="downloadTemplate()">⬇ Unduh Template Excel</button>
       <div style="height:8px"></div>
       <input type="file" id="fileImport" accept=".xlsx,.xls,.csv" onchange="importExcel(event)">
@@ -425,17 +428,31 @@ function viewBuildExam(){
     </div>
 
     <div class="card">
-      <div class="row-between"><h3>Soal (${d.questions.length})</h3><button class="btn btn-outline btn-sm" onclick="addManualQuestion()">+ Tambah Manual</button></div>
+      <div class="row-between"><h3>Soal (${d.questions.length})</h3></div>
+      <p class="muted" style="margin-top:-4px">Pilihan Ganda: ${d.questions.length - countEsai(d)} · Esai: ${countEsai(d)}/${MAX_ESAI}</p>
+      <div class="grid2" style="margin-bottom:14px">
+        <button class="btn btn-outline btn-sm" onclick="addManualQuestion('pg')">+ Pilihan Ganda</button>
+        <button class="btn btn-outline btn-sm" ${countEsai(d)>=MAX_ESAI?"disabled title='Batas maksimal esai tercapai'":""} onclick="addManualQuestion('esai')">+ Soal Esai</button>
+      </div>
       ${d.questions.map((q,i)=>`
         <div class="qbuild">
-          <div class="row-between"><b>Soal ${i+1}</b><span class="link-x" onclick="removeQuestion(${i})">Hapus</span></div>
+          <div class="row-between">
+            <b>Soal ${i+1} <span class="pill ${q.type==='esai'?'gold':''}" style="margin-left:6px;vertical-align:middle">${q.type==='esai'?'Esai':'Pilihan Ganda'}</span></b>
+            <span class="link-x" onclick="removeQuestion(${i})">Hapus</span>
+          </div>
           <textarea rows="2" placeholder="Tulis pertanyaan" oninput="state.examDraft.questions[${i}].soal=this.value">${esc(q.soal)}</textarea>
+          ${q.type === "esai" ? `
+            <label style="margin-top:2px">Kunci Jawaban / Rubrik (opsional, acuan penilaian guru)</label>
+            <textarea rows="2" placeholder="Contoh jawaban ideal atau poin-poin penilaian..." oninput="state.examDraft.questions[${i}].kunci=this.value">${esc(q.kunci||"")}</textarea>
+            <p class="muted" style="margin:0 0 4px">Soal esai dinilai manual oleh guru setelah siswa mengumpulkan jawaban.</p>
+          ` : `
           ${["A","B","C","D"].map(L=>`
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
               <input type="radio" name="correct${i}" ${q.correct===L?"checked":""} onchange="state.examDraft.questions[${i}].correct='${L}'" style="width:auto;margin:0">
               <input style="margin:0" placeholder="Pilihan ${L}" value="${esc(q.options[L]||"")}" oninput="state.examDraft.questions[${i}].options['${L}']=this.value">
             </div>
           `).join("")}
+          `}
         </div>
       `).join("")}
       ${d.questions.length===0 ? `<p class="muted">Belum ada soal. Tambah manual atau impor dari Excel.</p>` : ""}
@@ -444,16 +461,23 @@ function viewBuildExam(){
     <button class="btn btn-success" onclick="saveExam()">💾 Simpan & Buat Kode Ujian</button>
   </div>`;
 }
-function addManualQuestion(){
-  state.examDraft.questions.push({soal:"", options:{A:"",B:"",C:"",D:""}, correct:"A"});
+function addManualQuestion(type){
+  const d = state.examDraft;
+  if(type === "esai"){
+    if(countEsai(d) >= MAX_ESAI) return toast(`Maksimal ${MAX_ESAI} soal esai per ujian`);
+    d.questions.push({soal:"", type:"esai", kunci:""});
+  } else {
+    d.questions.push({soal:"", type:"pg", options:{A:"",B:"",C:"",D:""}, correct:"A"});
+  }
   render();
 }
 function removeQuestion(i){ state.examDraft.questions.splice(i,1); render(); }
 
 function downloadTemplate(){
   const wsData = [
-    ["Soal","PilihanA","PilihanB","PilihanC","PilihanD","JawabanBenar"],
-    ["Ibukota Indonesia adalah?","Jakarta","Bandung","Surabaya","Medan","A"]
+    ["Tipe","Soal","PilihanA","PilihanB","PilihanC","PilihanD","JawabanBenar","KunciJawaban"],
+    ["PG","Ibukota Indonesia adalah?","Jakarta","Bandung","Surabaya","Medan","A",""],
+    ["Esai","Jelaskan proses terjadinya fotosintesis pada tumbuhan.","","","","","","Cahaya matahari diserap klorofil, CO2 dan air diubah menjadi glukosa dan oksigen."]
   ];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   const wb = XLSX.utils.book_new();
@@ -469,23 +493,33 @@ function importExcel(evt){
       const wb = XLSX.read(e.target.result, {type:"array"});
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, {defval:""});
-      let added = 0;
+      let added = 0, skippedEsai = 0;
       rows.forEach(r=>{
         const soal = r.Soal || r.soal || "";
         if(!soal) return;
-        state.examDraft.questions.push({
-          soal: String(soal),
-          options:{
-            A: String(r.PilihanA ?? r.pilihanA ?? ""),
-            B: String(r.PilihanB ?? r.pilihanB ?? ""),
-            C: String(r.PilihanC ?? r.pilihanC ?? ""),
-            D: String(r.PilihanD ?? r.pilihanD ?? "")
-          },
-          correct: String(r.JawabanBenar ?? r.jawabanBenar ?? "A").trim().toUpperCase().charAt(0) || "A"
-        });
+        const tipeRaw = String(r.Tipe ?? r.tipe ?? "PG").trim().toLowerCase();
+        const isEsai = tipeRaw.startsWith("esai") || tipeRaw.startsWith("essay");
+        if(isEsai){
+          if(countEsai(state.examDraft) >= MAX_ESAI){ skippedEsai++; return; }
+          state.examDraft.questions.push({
+            soal: String(soal), type:"esai",
+            kunci: String(r.KunciJawaban ?? r.kunciJawaban ?? "")
+          });
+        } else {
+          state.examDraft.questions.push({
+            soal: String(soal), type:"pg",
+            options:{
+              A: String(r.PilihanA ?? r.pilihanA ?? ""),
+              B: String(r.PilihanB ?? r.pilihanB ?? ""),
+              C: String(r.PilihanC ?? r.pilihanC ?? ""),
+              D: String(r.PilihanD ?? r.pilihanD ?? "")
+            },
+            correct: String(r.JawabanBenar ?? r.jawabanBenar ?? "A").trim().toUpperCase().charAt(0) || "A"
+          });
+        }
         added++;
       });
-      toast(`${added} soal berhasil diimpor`);
+      toast(skippedEsai>0 ? `${added} soal diimpor, ${skippedEsai} soal esai dilewati (maks ${MAX_ESAI} esai)` : `${added} soal berhasil diimpor`);
       render();
     }catch(err){ console.error(err); toast("Gagal membaca file. Pastikan format sesuai template."); }
   };
@@ -496,6 +530,7 @@ async function saveExam(){
   const d = state.examDraft;
   if(!d.title.trim()) return toast("Judul ujian wajib diisi");
   if(d.questions.length===0) return toast("Tambahkan minimal 1 soal");
+  if(countEsai(d) > MAX_ESAI) return toast(`Maksimal ${MAX_ESAI} soal esai per ujian`);
   for(const q of d.questions){
     if(!q.soal.trim()) return toast("Ada soal yang kosong");
   }
@@ -584,12 +619,53 @@ function viewRecap(){
     ${filtered.length===0 ? `<div class="empty"><div class="icon">🕒</div>Belum ada siswa yang mengumpulkan</div>` : `
     <div class="card" style="overflow-x:auto">
       <table>
-        <tr><th>Foto</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Jurusan</th><th>Nilai</th><th>Pelanggaran</th></tr>
+        <tr><th>Foto</th><th>Nama</th><th>JK</th><th>Kelas</th><th>Jurusan</th><th>Nilai PG</th><th>Esai</th><th>Pelanggaran</th></tr>
         ${filtered.map(r=>`<tr>
           <td>${r.foto ? `<img class="photo-thumb" src="${r.foto}" onclick="openPhotoModal('${r.id}')">` : `<span class="photo-thumb-placeholder">?</span>`}</td>
-          <td>${esc(r.nama)}</td><td>${r.gender==='Laki-laki'?'L':r.gender==='Perempuan'?'P':'-'}</td><td>${esc(r.kelas)}</td><td>${esc(r.jurusan)}</td><td><b>${r.score}</b></td><td>${r.violations ? `<span style="color:var(--danger);font-weight:700">${r.violations}x</span>` : '<span class="muted">-</span>'}</td></tr>`).join("")}
+          <td>${esc(r.nama)}</td><td>${r.gender==='Laki-laki'?'L':r.gender==='Perempuan'?'P':'-'}</td><td>${esc(r.kelas)}</td><td>${esc(r.jurusan)}</td><td><b>${r.score}</b></td>
+          <td>${(r.totalEsai||0)>0 ? `<span class="link-x" style="color:var(--primary)" onclick="openEssayModal('${r.id}')">Lihat (${r.totalEsai})</span>` : '<span class="muted">-</span>'}</td>
+          <td>${r.violations ? `<span style="color:var(--danger);font-weight:700">${r.violations}x</span>` : '<span class="muted">-</span>'}</td></tr>`).join("")}
       </table>
     </div>`}
+  </div>`;
+}
+function formatEssayForExport(r, ex){
+  const ea = r.essayAnswers || {};
+  const keys = Object.keys(ea);
+  if(keys.length===0) return "";
+  return keys.sort((a,b)=>a-b).map(idx=>{
+    const soalText = (ex.questions && ex.questions[idx] && ex.questions[idx].soal) || `Soal ${parseInt(idx)+1}`;
+    return `[${soalText}] ${ea[idx] || "(kosong)"}`;
+  }).join(" | ");
+}
+function openEssayModal(resultId){
+  const r = state.recapResults.find(x=>x.id===resultId);
+  if(!r) return;
+  state.essayModal = {nama:r.nama, essayAnswers:r.essayAnswers||{}};
+  render();
+}
+function closeEssayModal(){ state.essayModal = null; render(); }
+function renderEssayModal(){
+  if(!state.essayModal) return "";
+  const ex = state.recapExam || {questions:[]};
+  const em = state.essayModal;
+  const entries = Object.keys(em.essayAnswers).sort((a,b)=>a-b);
+  return `
+  <div class="modal-overlay" onclick="if(event.target===this) closeEssayModal()">
+    <div class="modal-card faq-card">
+      <div class="row-between" style="margin-bottom:10px">
+        <h3 style="margin:0">Jawaban Esai — ${esc(em.nama)}</h3>
+        <button class="back" style="background:var(--primary-light);color:var(--primary)" onclick="closeEssayModal()">✕</button>
+      </div>
+      <div class="faq-list">
+        ${entries.length===0 ? `<p class="muted">Tidak ada jawaban esai.</p>` : entries.map(idx=>`
+          <div class="faq-item">
+            <div class="faq-q">${esc((ex.questions[idx]||{}).soal || `Soal ${parseInt(idx)+1}`)}</div>
+            <div class="faq-a">${em.essayAnswers[idx] ? esc(em.essayAnswers[idx]).replace(/\n/g,"<br>") : "<i>(belum dijawab)</i>"}</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
   </div>`;
 }
 function exportRecap(){
@@ -599,7 +675,9 @@ function exportRecap(){
   const data = filtered.map(r=>({
     Nama:r.nama, JenisKelamin:r.gender||"", TempatTanggalLahir:r.ttl||"",
     Kelas:r.kelas, Jurusan:r.jurusan, ProgramStudi:r.prodi||"",
-    Nilai:r.score, BenarBenar:r.correctCount, TotalSoal:r.total, Pelanggaran:r.violations||0,
+    NilaiPG:r.score, BenarPG:r.correctCount, TotalPG:r.total,
+    JumlahSoalEsai:r.totalEsai||0, JawabanEsai: formatEssayForExport(r, ex),
+    Pelanggaran:r.violations||0,
     WaktuPelaksanaan:r.waktuUjian||""
   }));
   const ws = XLSX.utils.json_to_sheet(data);
@@ -846,7 +924,7 @@ function viewExam(){
   const qs = ex.questions;
   const i = state.qIndex;
   const q = qs[i];
-  const answeredCount = Object.keys(state.answers).length;
+  const answeredCount = Object.keys(state.answers).filter(k=>String(state.answers[k]||"").trim()!=="").length;
   const isFlagged = !!state.flagged[i];
   const animClass = state.qAnim ? "q-transition" : "";
   state.qAnim = false;
@@ -861,7 +939,7 @@ function viewExam(){
     <div class="time-banner">⏰ Waktu hampir habis! Segera selesaikan dan kumpulkan jawaban Anda.</div>
     <div class="row-between" style="margin-bottom:8px">
       <span class="qcounter">Soal <b>${i+1}</b> <span class="muted">/ ${qs.length}</span></span>
-      <span class="muted" style="font-size:12px">${answeredCount} terjawab</span>
+      <span class="muted" id="answeredCount" style="font-size:12px">${answeredCount} terjawab</span>
     </div>
     <div class="progressbar"><div style="width:${((i+1)/qs.length*100)}%"></div></div>
 
@@ -870,19 +948,25 @@ function viewExam(){
         <div class="q-badge">${i+1}</div>
         <button class="flag-btn ${isFlagged?'active':''}" onclick="toggleFlag(${i})" title="Tandai untuk ditinjau">${isFlagged?'★':'☆'}</button>
       </div>
+      ${q.type==='esai' ? `<span class="pill gold" style="margin-bottom:8px">Esai</span>` : ""}
       <h3 style="font-size:17px;line-height:1.5;font-weight:600">${esc(q.soal)}</h3>
       <div style="margin-top:14px">
+      ${q.type === "esai" ? `
+        <textarea id="essayInput${i}" rows="7" placeholder="Tulis jawaban Anda di sini..." oninput="updateEssayAnswer(${i}, this.value)">${esc(state.answers[i]||"")}</textarea>
+        <p class="muted" style="margin-top:-6px">Soal esai akan dinilai secara manual oleh guru dan tidak memengaruhi nilai pilihan ganda otomatis.</p>
+      ` : `
       ${["A","B","C","D"].filter(L=>q.options[L]).map(L=>`
         <div class="option ${state.answers[i]===L?'selected':''}" onclick="selectAnswer(${i},'${L}')">
           <div class="letter">${L}</div>
           <div>${esc(q.options[L])}</div>
         </div>
       `).join("")}
+      `}
       </div>
     </div>
 
     <div class="q-nav">
-      ${qs.map((_,idx)=>`<div class="q-dot ${idx===i?'current':(state.answers[idx]?'answered':'')} ${state.flagged[idx]?'flagged':''}" onclick="goToQuestion(${idx})">${idx+1}</div>`).join("")}
+      ${qs.map((_,idx)=>`<div class="q-dot ${idx===i?'current':(String(state.answers[idx]||"").trim()?'answered':'')} ${state.flagged[idx]?'flagged':''}" id="qdot${idx}" onclick="goToQuestion(${idx})">${idx+1}</div>`).join("")}
     </div>
 
     <div class="grid2">
@@ -902,7 +986,9 @@ const FAQ_GURU = [
   {q:"Kenapa saya tidak bisa mengedit atau menghapus ujian dari aplikasi?", a:"Ini sengaja dikunci demi keamanan data — supaya soal dan nilai siswa tidak bisa diubah sembarangan. Untuk hapus, gunakan Firebase Console."},
   {q:"Bagaimana cara melihat rekap nilai siswa?", a:"Klik salah satu ujian di Dashboard Guru untuk membuka halaman Rekap Hasil, lengkap dengan filter kelas/jurusan dan tombol export ke Excel."},
   {q:"Kode ujian saya hilang, bagaimana cara melihatnya lagi?", a:"Kode ujian selalu ditampilkan sebagai pill di samping judul ujian pada daftar Dashboard Guru."},
-  {q:"Apakah aman jika kata sandi guru diketahui orang lain?", a:"Segera ganti TEACHER_PASSCODE di dalam file HTML dan upload ulang, karena kata sandi ini yang membatasi akses ke fitur pembuatan ujian."}
+  {q:"Apakah aman jika kata sandi guru diketahui orang lain?", a:"Segera ganti TEACHER_PASSCODE di dalam file HTML dan upload ulang, karena kata sandi ini yang membatasi akses ke fitur pembuatan ujian."},
+  {q:"Bagaimana cara menambahkan soal esai?", a:"Di halaman Buat Ujian, klik \"+ Soal Esai\" (maksimal 10 soal esai per ujian). Kunci jawaban/rubrik bersifat opsional, hanya sebagai acuan Anda saat menilai."},
+  {q:"Bagaimana cara menilai jawaban esai siswa?", a:"Buka Rekap Hasil ujian, lalu klik \"Lihat\" pada kolom Esai di baris siswa untuk membaca jawabannya, atau export ke Excel yang sudah menyertakan kolom JawabanEsai. Nilai pilihan ganda dihitung otomatis; nilai esai perlu digabungkan manual oleh guru."}
 ];
 const FAQ_SISWA = [
   {q:"Kode ujian saya tidak ditemukan, kenapa?", a:"Pastikan kode diketik persis 6 karakter tanpa spasi. Jika masih gagal, tanyakan ke guru apakah ujian sudah dibuat/aktif."},
@@ -910,7 +996,8 @@ const FAQ_SISWA = [
   {q:"Apa fungsi tombol bintang (⭐) di soal?", a:"Untuk menandai soal yang masih ragu-ragu, supaya mudah ditemukan lagi sebelum mengumpulkan jawaban."},
   {q:"Bagaimana jika waktu habis sebelum saya selesai?", a:"Jawaban yang sudah dipilih akan otomatis terkumpul saat waktu mencapai 00:00, jadi pastikan menjawab soal penting lebih dulu."},
   {q:"Bisakah saya mengulang ujian yang sudah dikumpulkan?", a:"Tidak bisa. Sistem hanya mengizinkan satu kali pengumpulan untuk setiap nama pada ujian yang sama."},
-  {q:"Bagaimana cara menyimpan hasil ujian saya?", a:"Setelah selesai, klik tombol \"Unduh Hasil Ujian\" di layar hasil untuk mengunduh kartu hasil sebagai gambar."}
+  {q:"Bagaimana cara menyimpan hasil ujian saya?", a:"Setelah selesai, klik tombol \"Unduh Hasil Ujian\" di layar hasil untuk mengunduh kartu hasil sebagai gambar."},
+  {q:"Bagaimana cara menjawab soal esai?", a:"Ketik jawaban Anda langsung di kotak teks pada soal esai (bertanda label \"Esai\"). Jawaban ini dinilai manual oleh guru setelah ujian dikumpulkan, jadi tidak memengaruhi nilai pilihan ganda yang tampil otomatis di layar hasil."}
 ];
 function openPhotoModal(resultId){
   const r = state.recapResults.find(x=>x.id===resultId);
@@ -957,9 +1044,22 @@ function renderFAQModal(){
 
 function toggleFlag(i){ state.flagged[i] = !state.flagged[i]; render(); startTimer(); }
 function selectAnswer(i, letter){ state.answers[i] = letter; render(); startTimer(); }
+function updateEssayAnswer(i, val){
+  // Sengaja TIDAK memanggil render() penuh saat mengetik agar kursor di textarea tidak loncat
+  // dan performa tetap ringan untuk jawaban esai yang panjang. Hanya elemen terkait diperbarui.
+  state.answers[i] = val;
+  const answeredCount = Object.keys(state.answers).filter(k=>String(state.answers[k]||"").trim()!=="").length;
+  const countEl = document.getElementById('answeredCount');
+  if(countEl) countEl.textContent = `${answeredCount} terjawab`;
+  const dot = document.getElementById(`qdot${i}`);
+  if(dot){
+    if(String(val).trim()) dot.classList.add('answered'); else dot.classList.remove('answered');
+  }
+  // timer tidak perlu direset karena DOM #timerDisplay tidak dihapus (tidak ada render() penuh di sini)
+}
 function confirmSubmit(){
   const total = state.currentExam.questions.length;
-  const answered = Object.keys(state.answers).length;
+  const answered = Object.keys(state.answers).filter(k=>String(state.answers[k]||"").trim()!=="").length;
   const flaggedCount = Object.values(state.flagged||{}).filter(Boolean).length;
   let msg = "Kumpulkan jawaban sekarang?";
   if(answered < total) msg = `Masih ada ${total-answered} soal belum dijawab. Tetap kumpulkan?`;
@@ -967,16 +1067,27 @@ function confirmSubmit(){
   if(confirm(msg)) submitExam();
 }
 async function submitExam(){
+  if(state.submitting) return; // cegah pengiriman ganda (mis. klik dobel / tombol enter berulang)
+  state.submitting = true;
   clearInterval(state.timerInterval);
   detachAntiCheat();
   document.body.classList.remove("time-critical");
   const ex = state.currentExam;
-  let correct = 0;
-  ex.questions.forEach((q,i)=>{ if(state.answers[i] === q.correct) correct++; });
-  const total = ex.questions.length;
-  const score = total ? Math.round((correct/total)*100) : 0;
+  let correct = 0, totalPG = 0, totalEsai = 0;
+  const essayAnswers = {};
+  ex.questions.forEach((q,i)=>{
+    if(q.type === "esai"){
+      totalEsai++;
+      essayAnswers[i] = state.answers[i] || "";
+    } else {
+      totalPG++;
+      if(state.answers[i] === q.correct) correct++;
+    }
+  });
+  // Nilai otomatis hanya dihitung dari soal pilihan ganda; soal esai disimpan terpisah untuk dinilai guru
+  const score = totalPG ? Math.round((correct/totalPG)*100) : 0;
   const payload = {
-    ...state.studentInfo, score, correctCount: correct, total,
+    ...state.studentInfo, score, correctCount: correct, total: totalPG, totalEsai, essayAnswers,
     violations: state.violations||0,
     answers: state.answers, submittedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -985,7 +1096,8 @@ async function submitExam(){
     const lockKey = `ujian_done_${ex.id}_${state.studentInfo.nama.toLowerCase()}`;
     localStorage.setItem(lockKey, "1");
   }catch(e){ console.error(e); toast("Gagal mengirim, periksa koneksi internet"); }
-  nav("studentResult", {finalScore:score, finalCorrect:correct, finalTotal:total, quoteText:randomQuote(), showQuoteModal:true});
+  state.submitting = false;
+  nav("studentResult", {finalScore:score, finalCorrect:correct, finalTotal:totalPG, finalEsai:totalEsai, quoteText:randomQuote(), showQuoteModal:true});
   if(score >= 70) setTimeout(fireConfetti, 150);
 }
 function downloadResultCard(){
@@ -1104,7 +1216,8 @@ function viewStudentResult(){
     <p>Ujian selesai, ${esc(state.studentInfo.nama)}!</p>
     <div class="result-score">${state.finalScore}</div>
     <span class="pill gold">${label}</span>
-    <p class="muted" style="margin-top:10px">Benar ${state.finalCorrect} dari ${state.finalTotal} soal</p>
+    <p class="muted" style="margin-top:10px">Benar ${state.finalCorrect} dari ${state.finalTotal} soal pilihan ganda</p>
+    ${state.finalEsai>0 ? `<p class="muted" style="margin-top:-8px">+ ${state.finalEsai} soal esai (menunggu penilaian guru)</p>` : ""}
     ${violations>0 ? `<p style="color:var(--danger);font-size:12px;font-weight:600">⚠ Terdeteksi ${violations}x keluar dari halaman ujian, tercatat untuk guru</p>` : ""}
     <button class="btn btn-gold" onclick="downloadResultCard()">⬇ Unduh Hasil Ujian</button>
     <div style="height:10px"></div>
@@ -1133,7 +1246,7 @@ function render(){
     studentJoin: viewStudentJoin, studentInfo: viewStudentInfo, studentPhoto: viewStudentPhoto, exam: viewExam,
     studentResult: viewStudentResult
   };
-  app.innerHTML = (views[state.view] || viewHome)() + renderFAQModal() + renderPhotoModal();
+  app.innerHTML = (views[state.view] || viewHome)() + renderFAQModal() + renderPhotoModal() + renderEssayModal();
   if(state.view === "studentPhoto" && !state.capturedPhoto) setTimeout(initCamera, 100);
   const td = document.getElementById("timerDisplay");
   if(td && state.timerEnd){
