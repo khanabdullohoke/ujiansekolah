@@ -188,6 +188,22 @@ const TEACHER_PASSCODE = "guru123";
    inti aturannya: exams & results hanya bisa dibuat (create), tidak bisa
    diubah/dihapus dari aplikasi publik, dan field periode dibatasi ke
    'UTS' / 'UAS' saja.
+
+   CATATAN: fitur "Nonaktifkan Ujian" di Dashboard Guru butuh izin UPDATE
+   khusus untuk mengubah field 'active' pada dokumen exams (agar kode ujian
+   lama tidak bisa dipakai siswa yang telat). Tambahkan aturan berikut agar
+   HANYA field 'active' yang boleh diubah, field lain (soal, jawaban benar,
+   kode, dst) tetap terkunci:
+
+   match /exams/{examId} {
+     allow create: if true; // sesuaikan dengan aturan create yang sudah ada
+     allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active']);
+     allow delete: if false;
+   }
+
+   Jika Firestore masih dalam "test mode", tombol Nonaktifkan/Aktifkan akan
+   langsung berfungsi tanpa aturan ini (tapi mode test tidak disarankan
+   untuk produksi).
 ============================================================ */
 
 let db = null, firebaseReady = false;
@@ -364,28 +380,61 @@ async function loadExamList(){
   render();
 }
 function viewTeacherDash(){
-  const list = state.examList;
+  const hideInactive = !!state.hideInactiveExams;
+  // Ujian aktif ditampilkan lebih dulu supaya dashboard tidak bertumpuk dengan ujian lama
+  const sorted = state.examList.slice().sort((a,b)=>(b.active!==false)-(a.active!==false));
+  const list = hideInactive ? sorted.filter(ex=>ex.active!==false) : sorted;
   return `
   ${topbar("Dashboard Guru", "nav('home')", "guru")}
   <div class="container fadein">
     <button class="btn btn-primary" onclick="startNewExam()">+ Buat Ujian Baru</button>
     <div style="height:16px"></div>
-    <h3>Ujian Saya</h3>
-    ${list.length===0 ? `<div class="empty"><div class="icon">📭</div>Belum ada ujian dibuat</div>` :
-      list.map(ex=>`
-        <div class="card tap" onclick="openRecap('${ex.id}')">
-          <div class="row-between">
-            <div>
-              <span class="badge ${ex.periode==='UAS'?'warn':'ok'}">${esc(ex.periode||'UTS')}</span>
-              <b style="display:block;margin-top:4px">${esc(ex.title)}</b>
-              <span class="muted">${esc(ex.kelas)} · ${esc(ex.jurusan)} · ${(ex.questions||[]).length} soal${countEsai(ex)>0 ? ` (${countEsai(ex)} esai)` : ""}</span>
+    <div class="row-between">
+      <h3 style="margin:0">Ujian Saya</h3>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer">
+        <input type="checkbox" style="width:auto;margin:0" ${hideInactive?"checked":""} onchange="state.hideInactiveExams=this.checked;render()">
+        Sembunyikan nonaktif
+      </label>
+    </div>
+    <div style="height:6px"></div>
+    ${list.length===0 ? `<div class="empty"><div class="icon">📭</div>Belum ada ujian ${hideInactive ? "aktif" : "dibuat"}</div>` :
+      list.map(ex=>{
+        const isActive = ex.active !== false;
+        return `
+        <div class="card" style="${isActive?"":"opacity:.65"}">
+          <div class="tap" style="cursor:pointer" onclick="openRecap('${ex.id}')">
+            <div class="row-between">
+              <div>
+                <span class="badge ${ex.periode==='UAS'?'warn':'ok'}">${esc(ex.periode||'UTS')}</span>
+                <span class="badge" style="margin-left:4px;background:${isActive?'#e3f6ec':'#fbe6e6'};color:${isActive?'var(--success)':'var(--danger)'}">${isActive?'● Aktif':'○ Nonaktif'}</span>
+                <b style="display:block;margin-top:4px">${esc(ex.title)}</b>
+                <span class="muted">${esc(ex.kelas)} · ${esc(ex.jurusan)} · ${(ex.questions||[]).length} soal${countEsai(ex)>0 ? ` (${countEsai(ex)} esai)` : ""}</span>
+              </div>
+              <span class="pill">${esc(ex.code)}</span>
             </div>
-            <span class="pill">${esc(ex.code)}</span>
           </div>
+          <div style="height:10px"></div>
+          <button class="btn btn-sm ${isActive?'btn-danger':'btn-success'}" style="width:100%" onclick="event.stopPropagation();toggleExamActive('${ex.id}',${isActive})">${isActive?'⛔ Nonaktifkan Ujian':'✓ Aktifkan Kembali'}</button>
         </div>
-      `).join("")
+      `}).join("")
     }
   </div>`;
+}
+async function toggleExamActive(examId, isActive){
+  const newActive = !isActive;
+  if(isActive && !confirm("Nonaktifkan ujian ini? Kode ujian tidak bisa dipakai siswa lagi untuk memulai ujian (hasil yang sudah masuk tetap tersimpan dan tetap bisa dilihat di Rekap).")) return;
+  if(!firebaseReady) return toast("Firebase belum dikonfigurasi");
+  try{
+    await db.collection("exams").doc(examId).update({active:newActive});
+    const item = state.examList.find(e=>e.id===examId);
+    if(item) item.active = newActive;
+    if(state.recapExam && state.recapExam.id===examId) state.recapExam.active = newActive;
+    toast(newActive ? "Ujian diaktifkan kembali" : "Ujian dinonaktifkan, siswa tidak bisa masuk lagi");
+    render();
+  }catch(e){
+    console.error(e);
+    toast("Gagal mengubah status. Pastikan Firestore Rules mengizinkan update field 'active' (lihat komentar di bagian firebaseConfig).");
+  }
 }
 function startNewExam(){
   state.examDraft = { title:"", periode:"UTS", jurusan:"", kelas:"", prodi:"", duration:30, questions:[] };
@@ -591,7 +640,10 @@ function viewRecap(){
   ${topbar("Rekap Hasil", "nav('teacherDash')", "guru")}
   <div class="container fadein">
     <div class="card">
-      <h3>${esc(ex.title)}</h3>
+      <div class="row-between" style="align-items:flex-start">
+        <h3 style="margin:0">${esc(ex.title)}</h3>
+        <span class="badge" style="background:${ex.active!==false?'#e3f6ec':'#fbe6e6'};color:${ex.active!==false?'var(--success)':'var(--danger)'}">${ex.active!==false?'● Aktif':'○ Nonaktif'}</span>
+      </div>
       <span class="pill">Kode: ${esc(ex.code)}</span>
       <div class="code-box" style="margin-top:12px">
         <div class="grid2" style="text-align:center">
@@ -600,6 +652,7 @@ function viewRecap(){
         </div>
       </div>
       <p class="muted">Tertinggi: <b>${max}</b> · Terendah: <b>${min}</b></p>
+      <button class="btn btn-sm ${ex.active!==false?'btn-danger':'btn-success'}" style="width:100%" onclick="toggleExamActive('${ex.id}',${ex.active!==false})">${ex.active!==false?'⛔ Nonaktifkan Ujian Ini':'✓ Aktifkan Kembali'}</button>
     </div>
 
     <div class="filters">
@@ -708,7 +761,9 @@ async function findExam(){
     const snap = await db.collection("exams").where("code","==",code).limit(1).get();
     if(snap.empty) return toast("Kode ujian tidak ditemukan");
     const doc = snap.docs[0];
-    state.currentExam = {id:doc.id, ...doc.data()};
+    const ex = {id:doc.id, ...doc.data()};
+    if(ex.active === false) return toast("Ujian ini sudah dinonaktifkan oleh guru dan tidak bisa diikuti lagi.", 3200);
+    state.currentExam = ex;
     nav("studentInfo");
   }catch(e){ console.error(e); toast("Gagal mencari ujian"); }
 }
@@ -988,7 +1043,8 @@ const FAQ_GURU = [
   {q:"Kode ujian saya hilang, bagaimana cara melihatnya lagi?", a:"Kode ujian selalu ditampilkan sebagai pill di samping judul ujian pada daftar Dashboard Guru."},
   {q:"Apakah aman jika kata sandi guru diketahui orang lain?", a:"Segera ganti TEACHER_PASSCODE di dalam file HTML dan upload ulang, karena kata sandi ini yang membatasi akses ke fitur pembuatan ujian."},
   {q:"Bagaimana cara menambahkan soal esai?", a:"Di halaman Buat Ujian, klik \"+ Soal Esai\" (maksimal 10 soal esai per ujian). Kunci jawaban/rubrik bersifat opsional, hanya sebagai acuan Anda saat menilai."},
-  {q:"Bagaimana cara menilai jawaban esai siswa?", a:"Buka Rekap Hasil ujian, lalu klik \"Lihat\" pada kolom Esai di baris siswa untuk membaca jawabannya, atau export ke Excel yang sudah menyertakan kolom JawabanEsai. Nilai pilihan ganda dihitung otomatis; nilai esai perlu digabungkan manual oleh guru."}
+  {q:"Bagaimana cara menilai jawaban esai siswa?", a:"Buka Rekap Hasil ujian, lalu klik \"Lihat\" pada kolom Esai di baris siswa untuk membaca jawabannya, atau export ke Excel yang sudah menyertakan kolom JawabanEsai. Nilai pilihan ganda dihitung otomatis; nilai esai perlu digabungkan manual oleh guru."},
+  {q:"Bagaimana cara menutup ujian yang sudah tidak dipakai?", a:"Klik tombol \"⛔ Nonaktifkan Ujian\" pada kartu ujian di Dashboard Guru atau di halaman Rekap Hasil. Kode ujian tersebut langsung tidak bisa dipakai lagi oleh siswa (termasuk siswa yang telat), tapi data soal dan hasil siswa sebelumnya tetap tersimpan dan bisa dilihat kapan saja. Ujian bisa diaktifkan kembali kapan pun diperlukan."}
 ];
 const FAQ_SISWA = [
   {q:"Kode ujian saya tidak ditemukan, kenapa?", a:"Pastikan kode diketik persis 6 karakter tanpa spasi. Jika masih gagal, tanyakan ke guru apakah ujian sudah dibuat/aktif."},
@@ -997,7 +1053,8 @@ const FAQ_SISWA = [
   {q:"Bagaimana jika waktu habis sebelum saya selesai?", a:"Jawaban yang sudah dipilih akan otomatis terkumpul saat waktu mencapai 00:00, jadi pastikan menjawab soal penting lebih dulu."},
   {q:"Bisakah saya mengulang ujian yang sudah dikumpulkan?", a:"Tidak bisa. Sistem hanya mengizinkan satu kali pengumpulan untuk setiap nama pada ujian yang sama."},
   {q:"Bagaimana cara menyimpan hasil ujian saya?", a:"Setelah selesai, klik tombol \"Unduh Hasil Ujian\" di layar hasil untuk mengunduh kartu hasil sebagai gambar."},
-  {q:"Bagaimana cara menjawab soal esai?", a:"Ketik jawaban Anda langsung di kotak teks pada soal esai (bertanda label \"Esai\"). Jawaban ini dinilai manual oleh guru setelah ujian dikumpulkan, jadi tidak memengaruhi nilai pilihan ganda yang tampil otomatis di layar hasil."}
+  {q:"Bagaimana cara menjawab soal esai?", a:"Ketik jawaban Anda langsung di kotak teks pada soal esai (bertanda label \"Esai\"). Jawaban ini dinilai manual oleh guru setelah ujian dikumpulkan, jadi tidak memengaruhi nilai pilihan ganda yang tampil otomatis di layar hasil."},
+  {q:"Kode ujian ditolak dengan pesan \"sudah dinonaktifkan\", apa artinya?", a:"Artinya guru sudah menutup akses ujian tersebut (biasanya karena waktu pengumpulan sudah lewat). Hubungi guru Anda untuk kebijakan siswa yang terlambat."}
 ];
 function openPhotoModal(resultId){
   const r = state.recapResults.find(x=>x.id===resultId);
